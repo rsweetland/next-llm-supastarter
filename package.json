@@ -1,0 +1,52 @@
+{
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "dev:inspect": "NODE_OPTIONS='--inspect' next dev",
+    "db:generate": "drizzle-kit generate && echo 'Next, manually apply generated sql to your database.'",
+    "build": "next build",
+    "start": "next start",
+    "test": "jest --watchAll",
+    "test:inspect": "node --inspect=0.0.0.0:9229 node_modules/.bin/jest --runInBand --watchAll --setupFiles dotenv/config --detectOpenHandles",
+    "test:ci": "jest --ci"
+  },
+  "dependencies": {
+    "@radix-ui/react-checkbox": "^1.1.1",
+    "@radix-ui/react-dropdown-menu": "^2.1.1",
+    "@radix-ui/react-label": "^2.1.0",
+    "@radix-ui/react-slot": "^1.1.0",
+    "@supabase/ssr": "latest",
+    "@supabase/supabase-js": "latest",
+    "autoprefixer": "10.4.17",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "dotenv": "^16.4.5",
+    "drizzle-orm": "^0.36.1",
+    "geist": "^1.2.1",
+    "lucide-react": "^0.436.0",
+    "next": "15.0.3",
+    "next-themes": "^0.3.0",
+    "postgres": "^3.4.5",
+    "prettier": "^3.3.3",
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "6.1.5",
+    "@testing-library/react": "14.1.2",
+    "@types/jest": "29.5.11",
+    "@types/node": "20.10.6",
+    "@types/pg": "^8.11.10",
+    "@types/react": "18.2.46",
+    "@types/react-dom": "18.2.18",
+    "drizzle-kit": "^0.28.1",
+    "jest": "29.7.0",
+    "jest-environment-jsdom": "29.7.0",
+    "postcss": "8.4.33",
+    "tailwind-merge": "^2.5.2",
+    "tailwindcss": "3.4.1",
+    "tailwindcss-animate": "^1.0.7",
+    "tsx": "^4.19.2",
+    "typescript": "5.3.3"
+  }
+}
