@@ -4,15 +4,10 @@
   Leverage LLMs to generate and mtaintain durable, documented, tested apps with Next.js 15 and Supabase 
 </p>
 
-<div align="center" style="border-color:#f9f9f9; border: 1px solid; padding:20px; margin: 25px; border-radius:5px;">
-  <h3>🧙‍♂️Upcoming Presentation on LLM Oriented Development</h3>
-  <p>This repo is evolving in preparation for for a presentation I will be giving at <a href="https://lu.ma/AISummitSiliconValley2025">AI Summit 2025</a> regarding the use of LLMs to sustainably generate production-grade code. Topics to be covered: Knowledge management, maintaining LLM generated systems in production, LLMs as team members, observability simple CLI based workflows. Follow for updates.
-</p>
-</div>
+>   <h3>🧙‍♂️Upcoming Presentation on LLM Oriented Development</h3>
+>   <p>This repo is evolving in preparation for for a presentation I will be giving at <a href="https://lu.ma/AISummitSiliconValley2025">AI Summit 2025</a> regarding the use of LLMs to sustainably generate production-grade code. Topics to be covered: maintaining LLM generated systems in production, LLMs as team members, knowledge management, observability simple CLI based workflows. Follow for updates.
 
-<p>Forked from my <a href="https://github.com/rsweetland/next-tdd-supastarter">starter project</a> to demonstrate LLM oriented development features.
-
-This starter integrates <a href="https://nextjs.org/blog/next-15">Next.js 15</a>, with the Vercel boilerplate examples from <a href="https://github.com/vercel/next.js/tree/v15.0.2/examples/with-supabase">with-supabase</a>, <a href="https://github.com/vercel/next.js/tree/v15.0.2/examples/with-jest">with-jest</a>, and <a href="https://github.com/vercel/examples/tree/%40vercel/examples-ui%402.0.3/storage/postgres-drizzle">postgres-drizzle</a></li>, fixes a few issues and sets up a hyper-efficient run-on-save, debugger-ready TDD workflow in VS Code.</p><br />
+This starter (forked from my simpler <a href="https://github.com/rsweetland/next-tdd-supastarter">tdd-next-supastarter</a>) integrates <a href="https://nextjs.org/blog/next-15">Next.js 15</a>, with the Vercel boilerplate examples from <a href="https://github.com/vercel/next.js/tree/v15.0.2/examples/with-supabase">with-supabase</a>, <a href="https://github.com/vercel/next.js/tree/v15.0.2/examples/with-jest">with-jest</a>, and <a href="https://github.com/vercel/examples/tree/%40vercel/examples-ui%402.0.3/storage/postgres-drizzle">postgres-drizzle</a></li>, fixes a few issues, sets up a hyper-efficient run-on-save, debugger-ready TDD workflow, tested in <a href="https://www.cursor.com/">Cursor</a> and ready to be used in LLM dev workflows.</p><br />
 
 <p align="center">
   <a href="#features"><strong>💎 Features</strong></a> ·
