@@ -1,0 +1,3030 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+<additional_info>
+
+</additional_info>
+
+</file_summary>
+
+<directory_structure>
+__tests__/
+  __snapshots__/
+    snapshot.test.tsx.snap
+  index.test.tsx
+  snapshot.test.tsx
+app/
+  (auth-pages)/
+    forgot-password/
+      page.tsx
+    sign-in/
+      page.tsx
+    sign-up/
+      page.tsx
+    layout.tsx
+    smtp-message.tsx
+  auth/
+    callback/
+      route.ts
+  protected/
+    reset-password/
+      page.tsx
+    page.tsx
+  utils/
+    add.test.ts
+    add.ts
+  actions.ts
+  counter.test.tsx
+  counter.tsx
+  globals.css
+  layout.tsx
+  page.test.tsx
+  page.tsx
+components/
+  tutorial/
+    code-block.tsx
+    connect-supabase-steps.tsx
+    fetch-data-steps.tsx
+    sign-up-user-steps.tsx
+    tutorial-step.tsx
+  typography/
+    inline-code.tsx
+  ui/
+    badge.tsx
+    button.tsx
+    checkbox.tsx
+    dropdown-menu.tsx
+    input.tsx
+    label.tsx
+  deploy-button.tsx
+  env-var-warning.tsx
+  form-message.tsx
+  header-auth.tsx
+  hero.tsx
+  next-logo.tsx
+  submit-button.tsx
+  supabase-logo.tsx
+  theme-switcher.tsx
+db/
+  index.ts
+  schema.ts
+drizzle/
+  meta/
+    _journal.json
+    0000_snapshot.json
+  0000_nappy_callisto.sql
+lib/
+  supabase/
+    client.ts
+    middleware.ts
+    server.ts
+  utils.ts
+.env.example
+.env.test.example
+.gitignore
+components.json
+drizzle.config.ts
+llms.md
+middleware.ts
+next.config.js
+package.json
+postcss.config.js
+README.md
+tailwind.config.ts
+tsconfig.json
+vitest.config.mts
+vitest.setup.ts
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="lib/supabase/client.ts">
+import { createBrowserClient } from "@supabase/ssr";
+
+export const createClient = () =>
+  createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  );
+</file>
+
+<file path="lib/supabase/middleware.ts">
+import { createServerClient } from "@supabase/ssr";
+import { type NextRequest, NextResponse } from "next/server";
+
+export const updateSession = async (request: NextRequest) => {
+  // This `try/catch` block is only here for the interactive tutorial.
+  // Feel free to remove once you have Supabase connected.
+  try {
+    // Create an unmodified response
+    let response = NextResponse.next({
+      request: {
+        headers: request.headers,
+      },
+    });
+
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value }) =>
+              request.cookies.set(name, value),
+            );
+            response = NextResponse.next({
+              request,
+            });
+            cookiesToSet.forEach(({ name, value, options }) =>
+              response.cookies.set(name, value, options),
+            );
+          },
+        },
+      },
+    );
+
+    // This will refresh session if expired - required for Server Components
+    // https://supabase.com/docs/guides/auth/server-side/nextjs
+    const user = await supabase.auth.getUser();
+
+    // protected routes
+    if (request.nextUrl.pathname.startsWith("/protected") && user.error) {
+      return NextResponse.redirect(new URL("/sign-in", request.url));
+    }
+
+    if (request.nextUrl.pathname === "/" && !user.error) {
+      return NextResponse.redirect(new URL("/protected", request.url));
+    }
+
+    return response;
+  } catch (e) {
+    // If you are here, a Supabase client could not be created!
+    // This is likely because you have not set up environment variables.
+    // Check out http://localhost:3000 for Next Steps.
+    return NextResponse.next({
+      request: {
+        headers: request.headers,
+      },
+    });
+  }
+};
+</file>
+
+<file path="lib/supabase/server.ts">
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+
+export const createClient = async () => {
+  const cookieStore = await cookies();
+
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          } catch (error) {
+            // The `set` method was called from a Server Component.
+            // This can be ignored if you have middleware refreshing
+            // user sessions.
+          }
+        },
+      },
+    },
+  );
+};
+</file>
+
+<file path="__tests__/__snapshots__/snapshot.test.tsx.snap">
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`renders homepage unchanged 1`] = `<div />`;
+</file>
+
+<file path="__tests__/snapshot.test.tsx">
+import Index from "@/app/page";
+import { render } from "@testing-library/react";
+import { it, expect } from 'vitest';
+
+it("renders homepage unchanged", () => {
+  const { container } = render(<Index />);
+  expect(container).toMatchSnapshot();
+  expect(true).toBe(true);
+});
+</file>
+
+<file path="app/(auth-pages)/forgot-password/page.tsx">
+import { forgotPasswordAction } from "@/app/actions";
+import { FormMessage, Message } from "@/components/form-message";
+import { SubmitButton } from "@/components/submit-button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import Link from "next/link";
+import { SmtpMessage } from "../smtp-message";
+
+export default async function ForgotPassword(props: {
+  searchParams: Promise<Message>;
+}) {
+  const searchParams = await props.searchParams;
+  return (
+    <>
+      <form className="flex-1 flex flex-col w-full gap-2 text-foreground [&>input]:mb-6 min-w-64 max-w-64 mx-auto">
+        <div>
+          <h1 className="text-2xl font-medium">Reset Password</h1>
+          <p className="text-sm text-secondary-foreground">
+            Already have an account?{" "}
+            <Link className="text-primary underline" href="/sign-in">
+              Sign in
+            </Link>
+          </p>
+        </div>
+        <div className="flex flex-col gap-2 [&>input]:mb-3 mt-8">
+          <Label htmlFor="email">Email</Label>
+          <Input name="email" placeholder="you@example.com" required />
+          <SubmitButton formAction={forgotPasswordAction}>
+            Reset Password
+          </SubmitButton>
+          <FormMessage message={searchParams} />
+        </div>
+      </form>
+      <SmtpMessage />
+    </>
+  );
+}
+</file>
+
+<file path="app/(auth-pages)/sign-in/page.tsx">
+import { signInAction } from "@/app/actions";
+import { FormMessage, Message } from "@/components/form-message";
+import { SubmitButton } from "@/components/submit-button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import Link from "next/link";
+
+export default async function Login(props: { searchParams: Promise<Message> }) {
+  const searchParams = await props.searchParams;
+  return (
+    <form className="flex-1 flex flex-col min-w-64">
+      <h1 className="text-2xl font-medium">Sign in</h1>
+      <p className="text-sm text-foreground">
+        Don't have an account?{" "}
+        <Link className="text-foreground font-medium underline" href="/sign-up">
+          Sign up
+        </Link>
+      </p>
+      <div className="flex flex-col gap-2 [&>input]:mb-3 mt-8">
+        <Label htmlFor="email">Email</Label>
+        <Input name="email" placeholder="you@example.com" required />
+        <div className="flex justify-between items-center">
+          <Label htmlFor="password">Password</Label>
+          <Link
+            className="text-xs text-foreground underline"
+            href="/forgot-password"
+          >
+            Forgot Password?
+          </Link>
+        </div>
+        <Input
+          type="password"
+          name="password"
+          placeholder="Your password"
+          required
+        />
+        <SubmitButton pendingText="Signing In..." formAction={signInAction}>
+          Sign in
+        </SubmitButton>
+        <FormMessage message={searchParams} />
+      </div>
+    </form>
+  );
+}
+</file>
+
+<file path="app/(auth-pages)/sign-up/page.tsx">
+import { signUpAction } from "@/app/actions";
+import { FormMessage, Message } from "@/components/form-message";
+import { SubmitButton } from "@/components/submit-button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import Link from "next/link";
+import { SmtpMessage } from "../smtp-message";
+
+export default async function Signup(props: {
+  searchParams: Promise<Message>;
+}) {
+  const searchParams = await props.searchParams;
+  if ("message" in searchParams) {
+    return (
+      <div className="w-full flex-1 flex items-center h-screen sm:max-w-md justify-center gap-2 p-4">
+        <FormMessage message={searchParams} />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <form className="flex flex-col min-w-64 max-w-64 mx-auto">
+        <h1 className="text-2xl font-medium">Sign up</h1>
+        <p className="text-sm text text-foreground">
+          Already have an account?{" "}
+          <Link className="text-primary font-medium underline" href="/sign-in">
+            Sign in
+          </Link>
+        </p>
+        <div className="flex flex-col gap-2 [&>input]:mb-3 mt-8">
+          <Label htmlFor="email">Email</Label>
+          <Input name="email" placeholder="you@example.com" required />
+          <Label htmlFor="password">Password</Label>
+          <Input
+            type="password"
+            name="password"
+            placeholder="Your password"
+            minLength={6}
+            required
+          />
+          <SubmitButton formAction={signUpAction} pendingText="Signing up...">
+            Sign up
+          </SubmitButton>
+          <FormMessage message={searchParams} />
+        </div>
+      </form>
+      <SmtpMessage />
+    </>
+  );
+}
+</file>
+
+<file path="app/(auth-pages)/layout.tsx">
+export default async function Layout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="max-w-7xl flex flex-col gap-12 items-start">{children}</div>
+  );
+}
+</file>
+
+<file path="app/(auth-pages)/smtp-message.tsx">
+import { ArrowUpRight, InfoIcon } from "lucide-react";
+import Link from "next/link";
+
+export function SmtpMessage() {
+  return (
+    <div className="bg-muted/50 px-5 py-3 border rounded-md flex gap-4">
+      <InfoIcon size={16} className="mt-0.5" />
+      <div className="flex flex-col gap-1">
+        <small className="text-sm text-secondary-foreground">
+          <strong> Note:</strong> Emails are rate limited. Enable Custom SMTP to
+          increase the rate limit.
+        </small>
+        <div>
+          <Link
+            href="https://supabase.com/docs/guides/auth/auth-smtp"
+            target="_blank"
+            className="text-primary/50 hover:text-primary flex items-center text-sm gap-1"
+          >
+            Learn more <ArrowUpRight size={14} />
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="app/auth/callback/route.ts">
+import { createClient } from "@/lib/supabase/server";
+import { NextResponse } from "next/server";
+
+export async function GET(request: Request) {
+  // The `/auth/callback` route is required for the server-side auth flow implemented
+  // by the SSR package. It exchanges an auth code for the user's session.
+  // https://supabase.com/docs/guides/auth/server-side/nextjs
+  const requestUrl = new URL(request.url);
+  const code = requestUrl.searchParams.get("code");
+  const origin = requestUrl.origin;
+  const redirectTo = requestUrl.searchParams.get("redirect_to")?.toString();
+
+  if (code) {
+    const supabase = await createClient();
+    await supabase.auth.exchangeCodeForSession(code);
+  }
+
+  if (redirectTo) {
+    return NextResponse.redirect(`${origin}${redirectTo}`);
+  }
+
+  // URL to redirect to after sign up process completes
+  return NextResponse.redirect(`${origin}/protected`);
+}
+</file>
+
+<file path="app/protected/reset-password/page.tsx">
+import { resetPasswordAction } from "@/app/actions";
+import { FormMessage, Message } from "@/components/form-message";
+import { SubmitButton } from "@/components/submit-button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+export default async function ResetPassword(props: {
+  searchParams: Promise<Message>;
+}) {
+  const searchParams = await props.searchParams;
+  return (
+    <form className="flex flex-col w-full max-w-md p-4 gap-2 [&>input]:mb-4">
+      <h1 className="text-2xl font-medium">Reset password</h1>
+      <p className="text-sm text-foreground/60">
+        Please enter your new password below.
+      </p>
+      <Label htmlFor="password">New password</Label>
+      <Input
+        type="password"
+        name="password"
+        placeholder="New password"
+        required
+      />
+      <Label htmlFor="confirmPassword">Confirm password</Label>
+      <Input
+        type="password"
+        name="confirmPassword"
+        placeholder="Confirm password"
+        required
+      />
+      <SubmitButton formAction={resetPasswordAction}>
+        Reset password
+      </SubmitButton>
+      <FormMessage message={searchParams} />
+    </form>
+  );
+}
+</file>
+
+<file path="app/actions.ts">
+"use server";
+
+import { encodedRedirect } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/server";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+
+export const signUpAction = async (formData: FormData) => {
+  const email = formData.get("email")?.toString();
+  const password = formData.get("password")?.toString();
+  const supabase = await createClient();
+  const origin = (await headers()).get("origin");
+
+  if (!email || !password) {
+    return { error: "Email and password are required" };
+  }
+
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: `${origin}/auth/callback`,
+    },
+  });
+
+  if (error) {
+    console.error(error.code + " " + error.message);
+    return encodedRedirect("error", "/sign-up", error.message);
+  } else {
+    return encodedRedirect(
+      "success",
+      "/sign-up",
+      "Thanks for signing up! Please check your email for a verification link.",
+    );
+  }
+};
+
+export const signInAction = async (formData: FormData) => {
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+  const supabase = await createClient();
+
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
+    return encodedRedirect("error", "/sign-in", error.message);
+  }
+
+  return redirect("/protected");
+};
+
+export const forgotPasswordAction = async (formData: FormData) => {
+  const email = formData.get("email")?.toString();
+  const supabase = await createClient();
+  const origin = (await headers()).get("origin");
+  const callbackUrl = formData.get("callbackUrl")?.toString();
+
+  if (!email) {
+    return encodedRedirect("error", "/forgot-password", "Email is required");
+  }
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${origin}/auth/callback?redirect_to=/protected/reset-password`,
+  });
+
+  if (error) {
+    console.error(error.message);
+    return encodedRedirect(
+      "error",
+      "/forgot-password",
+      "Could not reset password",
+    );
+  }
+
+  if (callbackUrl) {
+    return redirect(callbackUrl);
+  }
+
+  return encodedRedirect(
+    "success",
+    "/forgot-password",
+    "Check your email for a link to reset your password.",
+  );
+};
+
+export const resetPasswordAction = async (formData: FormData) => {
+  const supabase = await createClient();
+
+  const password = formData.get("password") as string;
+  const confirmPassword = formData.get("confirmPassword") as string;
+
+  if (!password || !confirmPassword) {
+    encodedRedirect(
+      "error",
+      "/protected/reset-password",
+      "Password and confirm password are required",
+    );
+  }
+
+  if (password !== confirmPassword) {
+    encodedRedirect(
+      "error",
+      "/protected/reset-password",
+      "Passwords do not match",
+    );
+  }
+
+  const { error } = await supabase.auth.updateUser({
+    password: password,
+  });
+
+  if (error) {
+    encodedRedirect(
+      "error",
+      "/protected/reset-password",
+      "Password update failed",
+    );
+  }
+
+  encodedRedirect("success", "/protected/reset-password", "Password updated");
+};
+
+export const signOutAction = async () => {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  return redirect("/sign-in");
+};
+</file>
+
+<file path="app/counter.tsx">
+"use client";
+
+import { useState } from "react";
+
+export default function Counter() {
+  const [count, setCount] = useState(0);
+  return (
+    <>
+      <h2>{count}</h2>
+      <button type="button" onClick={() => setCount(count + 1)}>
+        +
+      </button>
+    </>
+  );
+}
+</file>
+
+<file path="app/globals.css">
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
+    --radius: 0.5rem;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+  }
+
+  .dark {
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.1%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+</file>
+
+<file path="app/layout.tsx">
+import DeployButton from "@/components/deploy-button";
+import { EnvVarWarning } from "@/components/env-var-warning";
+import HeaderAuth from "@/components/header-auth";
+import { ThemeSwitcher } from "@/components/theme-switcher";
+import { hasEnvVars } from "@/utils/supabase/check-env-vars";
+import { GeistSans } from "geist/font/sans";
+import { ThemeProvider } from "next-themes";
+import Link from "next/link";
+import "./globals.css";
+
+const defaultUrl = process.env.VERCEL_URL
+  ? `https://${process.env.VERCEL_URL}`
+  : "http://localhost:3000";
+
+export const metadata = {
+  metadataBase: new URL(defaultUrl),
+  title: "Next.js and Supabase Starter Kit",
+  description: "The fastest way to build apps with Next.js and Supabase",
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en" className={GeistSans.className} suppressHydrationWarning>
+      <body className="bg-background text-foreground">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <main className="min-h-screen flex flex-col items-center">
+            <div className="flex-1 w-full flex flex-col gap-20 items-center">
+              <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16">
+                <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
+                  <div className="flex gap-5 items-center font-semibold">
+                    <Link href={"/"}>Next.js Supabase Starter</Link>
+                    <div className="flex items-center gap-2">
+                      <DeployButton />
+                    </div>
+                  </div>
+                  {!hasEnvVars ? <EnvVarWarning /> : <HeaderAuth />}
+                </div>
+              </nav>
+              <div className="flex flex-col gap-20 max-w-5xl p-5">
+                {children}
+              </div>
+
+              <footer className="w-full flex items-center justify-center border-t mx-auto text-center text-xs gap-8 py-16">
+                <p>
+                  Powered by{" "}
+                  <a
+                    href="https://supabase.com/?utm_source=create-next-app&utm_medium=template&utm_term=nextjs"
+                    target="_blank"
+                    className="font-bold hover:underline"
+                    rel="noreferrer"
+                  >
+                    Supabase
+                  </a>
+                </p>
+                <ThemeSwitcher />
+              </footer>
+            </div>
+          </main>
+        </ThemeProvider>
+      </body>
+    </html>
+  );
+}
+</file>
+
+<file path="components/tutorial/code-block.tsx">
+"use client";
+
+import { useState } from "react";
+import { Button } from "../ui/button";
+
+const CopyIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+  </svg>
+);
+
+const CheckIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <polyline points="20 6 9 17 4 12"></polyline>
+  </svg>
+);
+
+export function CodeBlock({ code }: { code: string }) {
+  const [icon, setIcon] = useState(CopyIcon);
+
+  const copy = async () => {
+    await navigator?.clipboard?.writeText(code);
+    setIcon(CheckIcon);
+    setTimeout(() => setIcon(CopyIcon), 2000);
+  };
+
+  return (
+    <pre className="bg-muted rounded-md p-6 my-6 relative">
+      <Button
+        size="icon"
+        onClick={copy}
+        variant={"outline"}
+        className="absolute right-2 top-2"
+      >
+        {icon}
+      </Button>
+      <code className="text-xs p-3">{code}</code>
+    </pre>
+  );
+}
+</file>
+
+<file path="components/tutorial/connect-supabase-steps.tsx">
+import { TutorialStep } from "./tutorial-step";
+
+export default function ConnectSupabaseSteps() {
+  return (
+    <ol className="flex flex-col gap-6">
+      <TutorialStep title="Create Supabase project">
+        <p>
+          Head over to{" "}
+          <a
+            href="https://app.supabase.com/project/_/settings/api"
+            target="_blank"
+            className="font-bold hover:underline text-foreground/80"
+            rel="noreferrer"
+          >
+            database.new
+          </a>{" "}
+          and create a new Supabase project.
+        </p>
+      </TutorialStep>
+
+      <TutorialStep title="Declare environment variables">
+        <p>
+          Rename the{" "}
+          <span className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs font-medium text-secondary-foreground border">
+            .env.example
+          </span>{" "}
+          file in your Next.js app to{" "}
+          <span className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs font-medium text-secondary-foreground border">
+            .env.local
+          </span>{" "}
+          and populate with values from{" "}
+          <a
+            href="https://app.supabase.com/project/_/settings/api"
+            target="_blank"
+            className="font-bold hover:underline text-foreground/80"
+            rel="noreferrer"
+          >
+            your Supabase project's API Settings
+          </a>
+          .
+        </p>
+      </TutorialStep>
+
+      <TutorialStep title="Restart your Next.js development server">
+        <p>
+          You may need to quit your Next.js development server and run{" "}
+          <span className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs font-medium text-secondary-foreground border">
+            npm run dev
+          </span>{" "}
+          again to load the new environment variables.
+        </p>
+      </TutorialStep>
+
+      <TutorialStep title="Refresh the page">
+        <p>
+          You may need to refresh the page for Next.js to load the new
+          environment variables.
+        </p>
+      </TutorialStep>
+    </ol>
+  );
+}
+</file>
+
+<file path="components/tutorial/sign-up-user-steps.tsx">
+import Link from "next/link";
+import { TutorialStep } from "./tutorial-step";
+import { ArrowUpRight } from "lucide-react";
+
+export default function SignUpUserSteps() {
+  return (
+    <ol className="flex flex-col gap-6">
+      {process.env.VERCEL_ENV === "preview" ||
+      process.env.VERCEL_ENV === "production" ? (
+        <TutorialStep title="Set up redirect urls">
+          <p>It looks like this App is hosted on Vercel.</p>
+          <p className="mt-4">
+            This particular deployment is
+            <span className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs font-medium text-secondary-foreground border">
+              "{process.env.VERCEL_ENV}"
+            </span>{" "}
+            on
+            <span className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs font-medium text-secondary-foreground border">
+              https://{process.env.VERCEL_URL}
+            </span>
+            .
+          </p>
+          <p className="mt-4">
+            You will need to{" "}
+            <Link
+              className="text-primary hover:text-foreground"
+              href={
+                "https://supabase.com/dashboard/project/_/auth/url-configuration"
+              }
+            >
+              update your Supabase project
+            </Link>{" "}
+            with redirect URLs based on your Vercel deployment URLs.
+          </p>
+          <ul className="mt-4">
+            <li>
+              -{" "}
+              <span className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs font-medium text-secondary-foreground border">
+                http://localhost:3000/**
+              </span>
+            </li>
+            <li>
+              -{" "}
+              <span className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs font-medium text-secondary-foreground border">
+                {`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}/**`}
+              </span>
+            </li>
+            <li>
+              -{" "}
+              <span className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs font-medium text-secondary-foreground border">
+                {`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL?.replace(".vercel.app", "")}-*-[vercel-team-url].vercel.app/**`}
+              </span>{" "}
+              (Vercel Team URL can be found in{" "}
+              <Link
+                className="text-primary hover:text-foreground"
+                href="https://vercel.com/docs/accounts/create-a-team#find-your-team-id"
+                target="_blank"
+              >
+                Vercel Team settings
+              </Link>
+              )
+            </li>
+          </ul>
+          <Link
+            href="https://supabase.com/docs/guides/auth/redirect-urls#vercel-preview-urls"
+            target="_blank"
+            className="text-primary/50 hover:text-primary flex items-center text-sm gap-1 mt-4"
+          >
+            Redirect URLs Docs <ArrowUpRight size={14} />
+          </Link>
+        </TutorialStep>
+      ) : null}
+      <TutorialStep title="Sign up your first user">
+        <p>
+          Head over to the{" "}
+          <Link
+            href="/sign-up"
+            className="font-bold hover:underline text-foreground/80"
+          >
+            Sign up
+          </Link>{" "}
+          page and sign up your first user. It's okay if this is just you for
+          now. Your awesome idea will have plenty of users later!
+        </p>
+      </TutorialStep>
+    </ol>
+  );
+}
+</file>
+
+<file path="components/tutorial/tutorial-step.tsx">
+import { Checkbox } from "../ui/checkbox";
+
+export function TutorialStep({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <li className="relative">
+      <Checkbox
+        id={title}
+        name={title}
+        className={`absolute top-[3px] mr-2 peer`}
+      />
+      <label
+        htmlFor={title}
+        className={`relative text-base text-foreground peer-checked:line-through font-medium`}
+      >
+        <span className="ml-8">{title}</span>
+        <div
+          className={`ml-8 text-sm peer-checked:line-through font-normal text-muted-foreground`}
+        >
+          {children}
+        </div>
+      </label>
+    </li>
+  );
+}
+</file>
+
+<file path="components/typography/inline-code.tsx">
+export function TypographyInlineCode() {
+  return (
+    <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold">
+      @radix-ui/react-alert-dialog
+    </code>
+  );
+}
+</file>
+
+<file path="components/ui/badge.tsx">
+import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+
+import { cn } from "@/lib/utils";
+
+const badgeVariants = cva(
+  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  {
+    variants: {
+      variant: {
+        default:
+          "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
+        secondary:
+          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        destructive:
+          "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
+        outline: "text-foreground",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  },
+);
+
+export interface BadgeProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof badgeVariants> {}
+
+function Badge({ className, variant, ...props }: BadgeProps) {
+  return (
+    <div className={cn(badgeVariants({ variant }), className)} {...props} />
+  );
+}
+
+export { Badge, badgeVariants };
+</file>
+
+<file path="components/ui/button.tsx">
+import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
+import { cva, type VariantProps } from "class-variance-authority";
+
+import { cn } from "@/lib/utils";
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  },
+);
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button";
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    );
+  },
+);
+Button.displayName = "Button";
+
+export { Button, buttonVariants };
+</file>
+
+<file path="components/ui/checkbox.tsx">
+"use client";
+
+import * as React from "react";
+import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
+import { Check } from "lucide-react";
+
+import { cn } from "@/lib/utils";
+
+const Checkbox = React.forwardRef<
+  React.ElementRef<typeof CheckboxPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>
+>(({ className, ...props }, ref) => (
+  <CheckboxPrimitive.Root
+    ref={ref}
+    className={cn(
+      "peer h-4 w-4 shrink-0 rounded-sm border border-primary ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground",
+      className,
+    )}
+    {...props}
+  >
+    <CheckboxPrimitive.Indicator
+      className={cn("flex items-center justify-center text-current")}
+    >
+      <Check className="h-4 w-4" />
+    </CheckboxPrimitive.Indicator>
+  </CheckboxPrimitive.Root>
+));
+Checkbox.displayName = CheckboxPrimitive.Root.displayName;
+
+export { Checkbox };
+</file>
+
+<file path="components/ui/dropdown-menu.tsx">
+"use client";
+
+import * as React from "react";
+import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
+import { Check, ChevronRight, Circle } from "lucide-react";
+
+import { cn } from "@/lib/utils";
+
+const DropdownMenu = DropdownMenuPrimitive.Root;
+
+const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
+
+const DropdownMenuGroup = DropdownMenuPrimitive.Group;
+
+const DropdownMenuPortal = DropdownMenuPrimitive.Portal;
+
+const DropdownMenuSub = DropdownMenuPrimitive.Sub;
+
+const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup;
+
+const DropdownMenuSubTrigger = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.SubTrigger>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubTrigger> & {
+    inset?: boolean;
+  }
+>(({ className, inset, children, ...props }, ref) => (
+  <DropdownMenuPrimitive.SubTrigger
+    ref={ref}
+    className={cn(
+      "flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent data-[state=open]:bg-accent",
+      inset && "pl-8",
+      className,
+    )}
+    {...props}
+  >
+    {children}
+    <ChevronRight className="ml-auto h-4 w-4" />
+  </DropdownMenuPrimitive.SubTrigger>
+));
+DropdownMenuSubTrigger.displayName =
+  DropdownMenuPrimitive.SubTrigger.displayName;
+
+const DropdownMenuSubContent = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.SubContent>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubContent>
+>(({ className, ...props }, ref) => (
+  <DropdownMenuPrimitive.SubContent
+    ref={ref}
+    className={cn(
+      "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+      className,
+    )}
+    {...props}
+  />
+));
+DropdownMenuSubContent.displayName =
+  DropdownMenuPrimitive.SubContent.displayName;
+
+const DropdownMenuContent = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>
+>(({ className, sideOffset = 4, ...props }, ref) => (
+  <DropdownMenuPrimitive.Portal>
+    <DropdownMenuPrimitive.Content
+      ref={ref}
+      sideOffset={sideOffset}
+      className={cn(
+        "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+        className,
+      )}
+      {...props}
+    />
+  </DropdownMenuPrimitive.Portal>
+));
+DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName;
+
+const DropdownMenuItem = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.Item>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> & {
+    inset?: boolean;
+  }
+>(({ className, inset, ...props }, ref) => (
+  <DropdownMenuPrimitive.Item
+    ref={ref}
+    className={cn(
+      "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      inset && "pl-8",
+      className,
+    )}
+    {...props}
+  />
+));
+DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName;
+
+const DropdownMenuCheckboxItem = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.CheckboxItem>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.CheckboxItem>
+>(({ className, children, checked, ...props }, ref) => (
+  <DropdownMenuPrimitive.CheckboxItem
+    ref={ref}
+    className={cn(
+      "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      className,
+    )}
+    checked={checked}
+    {...props}
+  >
+    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+      <DropdownMenuPrimitive.ItemIndicator>
+        <Check className="h-4 w-4" />
+      </DropdownMenuPrimitive.ItemIndicator>
+    </span>
+    {children}
+  </DropdownMenuPrimitive.CheckboxItem>
+));
+DropdownMenuCheckboxItem.displayName =
+  DropdownMenuPrimitive.CheckboxItem.displayName;
+
+const DropdownMenuRadioItem = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.RadioItem>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.RadioItem>
+>(({ className, children, ...props }, ref) => (
+  <DropdownMenuPrimitive.RadioItem
+    ref={ref}
+    className={cn(
+      "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      className,
+    )}
+    {...props}
+  >
+    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+      <DropdownMenuPrimitive.ItemIndicator>
+        <Circle className="h-2 w-2 fill-current" />
+      </DropdownMenuPrimitive.ItemIndicator>
+    </span>
+    {children}
+  </DropdownMenuPrimitive.RadioItem>
+));
+DropdownMenuRadioItem.displayName = DropdownMenuPrimitive.RadioItem.displayName;
+
+const DropdownMenuLabel = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.Label>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Label> & {
+    inset?: boolean;
+  }
+>(({ className, inset, ...props }, ref) => (
+  <DropdownMenuPrimitive.Label
+    ref={ref}
+    className={cn(
+      "px-2 py-1.5 text-sm font-semibold",
+      inset && "pl-8",
+      className,
+    )}
+    {...props}
+  />
+));
+DropdownMenuLabel.displayName = DropdownMenuPrimitive.Label.displayName;
+
+const DropdownMenuSeparator = React.forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.Separator>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Separator>
+>(({ className, ...props }, ref) => (
+  <DropdownMenuPrimitive.Separator
+    ref={ref}
+    className={cn("-mx-1 my-1 h-px bg-muted", className)}
+    {...props}
+  />
+));
+DropdownMenuSeparator.displayName = DropdownMenuPrimitive.Separator.displayName;
+
+const DropdownMenuShortcut = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLSpanElement>) => {
+  return (
+    <span
+      className={cn("ml-auto text-xs tracking-widest opacity-60", className)}
+      {...props}
+    />
+  );
+};
+DropdownMenuShortcut.displayName = "DropdownMenuShortcut";
+
+export {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+  DropdownMenuRadioItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuGroup,
+  DropdownMenuPortal,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuRadioGroup,
+};
+</file>
+
+<file path="components/ui/input.tsx">
+import * as React from "react";
+
+import { cn } from "@/lib/utils";
+
+export interface InputProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {}
+
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ className, type, ...props }, ref) => {
+    return (
+      <input
+        type={type}
+        className={cn(
+          "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+          className,
+        )}
+        ref={ref}
+        {...props}
+      />
+    );
+  },
+);
+Input.displayName = "Input";
+
+export { Input };
+</file>
+
+<file path="components/ui/label.tsx">
+"use client";
+
+import * as React from "react";
+import * as LabelPrimitive from "@radix-ui/react-label";
+import { cva, type VariantProps } from "class-variance-authority";
+
+import { cn } from "@/lib/utils";
+
+const labelVariants = cva(
+  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+);
+
+const Label = React.forwardRef<
+  React.ElementRef<typeof LabelPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> &
+    VariantProps<typeof labelVariants>
+>(({ className, ...props }, ref) => (
+  <LabelPrimitive.Root
+    ref={ref}
+    className={cn(labelVariants(), className)}
+    {...props}
+  />
+));
+Label.displayName = LabelPrimitive.Root.displayName;
+
+export { Label };
+</file>
+
+<file path="components/deploy-button.tsx">
+import Link from "next/link";
+import { Button } from "./ui/button";
+
+export default function DeployButton() {
+  return (
+    <>
+      <Link
+        href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&project-name=nextjs-with-supabase&repository-name=nextjs-with-supabase&demo-title=nextjs-with-supabase&demo-description=This+starter+configures+Supabase+Auth+to+use+cookies%2C+making+the+user%27s+session+available+throughout+the+entire+Next.js+app+-+Client+Components%2C+Server+Components%2C+Route+Handlers%2C+Server+Actions+and+Middleware.&demo-url=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2F&external-id=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&demo-image=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2Fopengraph-image.png"
+        target="_blank"
+      >
+        <Button className="flex items-center gap-2" size={"sm"}>
+          <svg
+            className="h-3 w-3"
+            viewBox="0 0 76 65"
+            fill="hsl(var(--background)/1)"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path d="M37.5274 0L75.0548 65H0L37.5274 0Z" fill="inherit" />
+          </svg>
+          <span>Deploy to Vercel</span>
+        </Button>
+      </Link>
+    </>
+  );
+}
+</file>
+
+<file path="components/env-var-warning.tsx">
+import Link from "next/link";
+import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
+
+export function EnvVarWarning() {
+  return (
+    <div className="flex gap-4 items-center">
+      <Badge variant={"outline"} className="font-normal">
+        Supabase environment variables required
+      </Badge>
+      <div className="flex gap-2">
+        <Button
+          asChild
+          size="sm"
+          variant={"outline"}
+          disabled
+          className="opacity-75 cursor-none pointer-events-none"
+        >
+          <Link href="/sign-in">Sign in</Link>
+        </Button>
+        <Button
+          asChild
+          size="sm"
+          variant={"default"}
+          disabled
+          className="opacity-75 cursor-none pointer-events-none"
+        >
+          <Link href="/sign-up">Sign up</Link>
+        </Button>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="components/form-message.tsx">
+export type Message =
+  | { success: string }
+  | { error: string }
+  | { message: string };
+
+export function FormMessage({ message }: { message: Message }) {
+  return (
+    <div className="flex flex-col gap-2 w-full max-w-md text-sm">
+      {"success" in message && (
+        <div className="text-foreground border-l-2 border-foreground px-4">
+          {message.success}
+        </div>
+      )}
+      {"error" in message && (
+        <div className="text-destructive-foreground border-l-2 border-destructive-foreground px-4">
+          {message.error}
+        </div>
+      )}
+      {"message" in message && (
+        <div className="text-foreground border-l-2 px-4">{message.message}</div>
+      )}
+    </div>
+  );
+}
+</file>
+
+<file path="components/header-auth.tsx">
+import { signOutAction } from "@/app/actions";
+import { hasEnvVars } from "@/utils/supabase/check-env-vars";
+import Link from "next/link";
+import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
+import { createClient } from "@/lib/supabase/server";
+
+export default async function AuthButton() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!hasEnvVars) {
+    return (
+      <>
+        <div className="flex gap-4 items-center">
+          <div>
+            <Badge
+              variant={"default"}
+              className="font-normal pointer-events-none"
+            >
+              Please update .env.local file with anon key and url
+            </Badge>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              asChild
+              size="sm"
+              variant={"outline"}
+              disabled
+              className="opacity-75 cursor-none pointer-events-none"
+            >
+              <Link href="/sign-in">Sign in</Link>
+            </Button>
+            <Button
+              asChild
+              size="sm"
+              variant={"default"}
+              disabled
+              className="opacity-75 cursor-none pointer-events-none"
+            >
+              <Link href="/sign-up">Sign up</Link>
+            </Button>
+          </div>
+        </div>
+      </>
+    );
+  }
+  return user ? (
+    <div className="flex items-center gap-4">
+      Hey, {user.email}!
+      <form action={signOutAction}>
+        <Button type="submit" variant={"outline"}>
+          Sign out
+        </Button>
+      </form>
+    </div>
+  ) : (
+    <div className="flex gap-2">
+      <Button asChild size="sm" variant={"outline"}>
+        <Link href="/sign-in">Sign in</Link>
+      </Button>
+      <Button asChild size="sm" variant={"default"}>
+        <Link href="/sign-up">Sign up</Link>
+      </Button>
+    </div>
+  );
+}
+</file>
+
+<file path="components/hero.tsx">
+import NextLogo from "./next-logo";
+import SupabaseLogo from "./supabase-logo";
+
+export default function Header() {
+  return (
+    <div className="flex flex-col gap-16 items-center">
+      <div className="flex gap-8 justify-center items-center">
+        <a
+          href="https://supabase.com/?utm_source=create-next-app&utm_medium=template&utm_term=nextjs"
+          target="_blank"
+          rel="noreferrer"
+        >
+          <SupabaseLogo />
+        </a>
+        <span className="border-l rotate-45 h-6" />
+        <a href="https://nextjs.org/" target="_blank" rel="noreferrer">
+          <NextLogo />
+        </a>
+      </div>
+      <h1 className="sr-only">Supabase and Next.js Starter Template</h1>
+      <p className="text-3xl lg:text-4xl !leading-tight mx-auto max-w-xl text-center">
+        The fastest way to build apps with{" "}
+        <a
+          href="https://supabase.com/?utm_source=create-next-app&utm_medium=template&utm_term=nextjs"
+          target="_blank"
+          className="font-bold hover:underline"
+          rel="noreferrer"
+        >
+          Supabase
+        </a>{" "}
+        and{" "}
+        <a
+          href="https://nextjs.org/"
+          target="_blank"
+          className="font-bold hover:underline"
+          rel="noreferrer"
+        >
+          Next.js
+        </a>
+      </p>
+      <div className="w-full p-[1px] bg-gradient-to-r from-transparent via-foreground/10 to-transparent my-8" />
+    </div>
+  );
+}
+</file>
+
+<file path="components/next-logo.tsx">
+export default function NextLogo() {
+  return (
+    <svg
+      aria-label="Next.js logotype"
+      height="68"
+      role="img"
+      viewBox="0 0 394 79"
+      width="100"
+    >
+      <path
+        d="M261.919 0.0330722H330.547V12.7H303.323V79.339H289.71V12.7H261.919V0.0330722Z"
+        fill="currentColor"
+      />
+      <path
+        d="M149.052 0.0330722V12.7H94.0421V33.0772H138.281V45.7441H94.0421V66.6721H149.052V79.339H80.43V12.7H80.4243V0.0330722H149.052Z"
+        fill="currentColor"
+      />
+      <path
+        d="M183.32 0.0661486H165.506L229.312 79.3721H247.178L215.271 39.7464L247.127 0.126654L229.312 0.154184L206.352 28.6697L183.32 0.0661486Z"
+        fill="currentColor"
+      />
+      <path
+        d="M201.6 56.7148L192.679 45.6229L165.455 79.4326H183.32L201.6 56.7148Z"
+        fill="currentColor"
+      />
+      <path
+        clipRule="evenodd"
+        d="M80.907 79.339L17.0151 0H0V79.3059H13.6121V16.9516L63.8067 79.339H80.907Z"
+        fill="currentColor"
+        fillRule="evenodd"
+      />
+      <path
+        d="M333.607 78.8546C332.61 78.8546 331.762 78.5093 331.052 77.8186C330.342 77.1279 329.991 76.2917 330 75.3011C329.991 74.3377 330.342 73.5106 331.052 72.8199C331.762 72.1292 332.61 71.7838 333.607 71.7838C334.566 71.7838 335.405 72.1292 336.115 72.8199C336.835 73.5106 337.194 74.3377 337.204 75.3011C337.194 75.9554 337.028 76.5552 336.696 77.0914C336.355 77.6368 335.922 78.064 335.377 78.373C334.842 78.6911 334.252 78.8546 333.607 78.8546Z"
+        fill="currentColor"
+      />
+      <path
+        d="M356.84 45.4453H362.872V68.6846C362.863 70.8204 362.401 72.6472 361.498 74.1832C360.585 75.7191 359.321 76.8914 357.698 77.7185C356.084 78.5364 354.193 78.9546 352.044 78.9546C350.079 78.9546 348.318 78.6001 346.75 77.9094C345.182 77.2187 343.937 76.1826 343.024 74.8193C342.101 73.456 341.649 71.7565 341.649 69.7207H347.691C347.7 70.6114 347.903 71.3838 348.29 72.0291C348.677 72.6744 349.212 73.1651 349.895 73.5105C350.586 73.8559 351.38 74.0286 352.274 74.0286C353.243 74.0286 354.073 73.8286 354.746 73.4196C355.419 73.0197 355.936 72.4199 356.296 71.6201C356.646 70.8295 356.831 69.8479 356.84 68.6846V45.4453Z"
+        fill="currentColor"
+      />
+      <path
+        d="M387.691 54.5338C387.544 53.1251 386.898 52.0254 385.773 51.2438C384.638 50.4531 383.172 50.0623 381.373 50.0623C380.11 50.0623 379.022 50.2532 378.118 50.6258C377.214 51.0075 376.513 51.5164 376.033 52.1617C375.554 52.807 375.314 53.5432 375.295 54.3703C375.295 55.061 375.461 55.6608 375.784 56.1607C376.107 56.6696 376.54 57.0968 377.103 57.4422C377.656 57.7966 378.274 58.0874 378.948 58.3237C379.63 58.56 380.313 58.76 380.995 58.9236L384.14 59.6961C385.404 59.9869 386.631 60.3778 387.802 60.8776C388.973 61.3684 390.034 61.9955 390.965 62.7498C391.897 63.5042 392.635 64.413 393.179 65.4764C393.723 66.5397 394 67.7848 394 69.2208C394 71.1566 393.502 72.8562 392.496 74.3285C391.491 75.7917 390.043 76.9369 388.143 77.764C386.252 78.582 383.965 79 381.272 79C378.671 79 376.402 78.6002 374.493 77.8004C372.575 77.0097 371.08 75.8463 370.001 74.3194C368.922 72.7926 368.341 70.9294 368.258 68.7391H374.235C374.318 69.8842 374.687 70.8386 375.314 71.6111C375.95 72.3745 376.78 72.938 377.795 73.3197C378.819 73.6923 379.962 73.8832 381.226 73.8832C382.545 73.8832 383.707 73.6832 384.712 73.2924C385.708 72.9016 386.492 72.3564 387.055 71.6475C387.627 70.9476 387.913 70.1206 387.922 69.1754C387.913 68.312 387.654 67.5939 387.156 67.0304C386.649 66.467 385.948 65.9944 385.053 65.6127C384.15 65.231 383.098 64.8856 381.899 64.5857L378.081 63.6223C375.323 62.9225 373.137 61.8592 371.541 60.4323C369.937 59.0054 369.143 57.115 369.143 54.7429C369.143 52.798 369.678 51.0894 370.758 49.6261C371.827 48.1629 373.294 47.0268 375.148 46.2179C377.011 45.4 379.114 45 381.456 45C383.836 45 385.92 45.4 387.719 46.2179C389.517 47.0268 390.929 48.1538 391.952 49.5897C392.976 51.0257 393.511 52.6707 393.539 54.5338H387.691Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+</file>
+
+<file path="components/submit-button.tsx">
+"use client";
+
+import { Button } from "@/components/ui/button";
+import { type ComponentProps } from "react";
+import { useFormStatus } from "react-dom";
+
+type Props = ComponentProps<typeof Button> & {
+  pendingText?: string;
+};
+
+export function SubmitButton({
+  children,
+  pendingText = "Submitting...",
+  ...props
+}: Props) {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button type="submit" aria-disabled={pending} {...props}>
+      {pending ? pendingText : children}
+    </Button>
+  );
+}
+</file>
+
+<file path="components/supabase-logo.tsx">
+export default function SupabaseLogo() {
+  return (
+    <svg
+      aria-label="Supabase logo"
+      width="140"
+      height="30"
+      viewBox="0 0 115 23"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <g clipPath="url(#clip0_4671_51136)">
+        <g clipPath="url(#clip1_4671_51136)">
+          <path
+            d="M13.4028 21.8652C12.8424 22.5629 11.7063 22.1806 11.6928 21.2898L11.4954 8.25948H20.3564C21.9614 8.25948 22.8565 10.0924 21.8585 11.3353L13.4028 21.8652Z"
+            fill="url(#paint0_linear_4671_51136)"
+          />
+          <path
+            d="M13.4028 21.8652C12.8424 22.5629 11.7063 22.1806 11.6928 21.2898L11.4954 8.25948H20.3564C21.9614 8.25948 22.8565 10.0924 21.8585 11.3353L13.4028 21.8652Z"
+            fill="url(#paint1_linear_4671_51136)"
+            fillOpacity="0.2"
+          />
+          <path
+            d="M9.79895 0.89838C10.3593 0.200591 11.4954 0.582929 11.5089 1.47383L11.5955 14.5041H2.84528C1.24026 14.5041 0.345103 12.6711 1.34316 11.4283L9.79895 0.89838Z"
+            fill="#3ECF8E"
+          />
+        </g>
+        <path
+          d="M30.5894 13.3913C30.7068 14.4766 31.7052 16.3371 34.6026 16.3371C37.1279 16.3371 38.3418 14.7479 38.3418 13.1976C38.3418 11.8022 37.3824 10.6588 35.4836 10.2712L34.1131 9.98049C33.5846 9.88359 33.2323 9.5929 33.2323 9.12777C33.2323 8.58512 33.7804 8.17818 34.4656 8.17818C35.5618 8.17818 35.9729 8.89521 36.0513 9.45725L38.2243 8.97275C38.1069 7.94561 37.1867 6.22083 34.446 6.22083C32.3709 6.22083 30.844 7.63555 30.844 9.34094C30.844 10.6781 31.6856 11.7828 33.5454 12.1898L34.8179 12.4805C35.5618 12.6355 35.8555 12.9844 35.8555 13.4107C35.8555 13.9146 35.4444 14.3603 34.583 14.3603C33.4476 14.3603 32.8797 13.6626 32.8212 12.9068L30.5894 13.3913Z"
+          fill="currentColor"
+        />
+        <path
+          d="M46.6623 16.0464H49.1486C49.1094 15.717 49.0506 15.0581 49.0506 14.3216V6.51154H46.4468V12.0542C46.4468 13.1588 45.7813 13.934 44.6263 13.934C43.4126 13.934 42.8643 13.0813 42.8643 12.0154V6.51154H40.2606V12.5387C40.2606 14.6123 41.5918 16.2984 43.9215 16.2984C44.9393 16.2984 46.0556 15.9108 46.5841 15.0193C46.5841 15.4069 46.6231 15.8526 46.6623 16.0464Z"
+          fill="currentColor"
+        />
+        <path
+          d="M54.433 19.7286V15.1162C54.9027 15.7558 55.8817 16.279 57.213 16.279C59.9341 16.279 61.7545 14.1472 61.7545 11.2596C61.7545 8.43021 60.1298 6.29842 57.3108 6.29842C55.8623 6.29842 54.7855 6.93792 54.3548 7.67439V6.51159H51.8295V19.7286H54.433ZM59.19 11.279C59.19 12.9845 58.133 13.9728 56.8017 13.9728C55.4708 13.9728 54.394 12.9651 54.394 11.279C54.394 9.59299 55.4708 8.6046 56.8017 8.6046C58.133 8.6046 59.19 9.59299 59.19 11.279Z"
+          fill="currentColor"
+        />
+        <path
+          d="M63.229 13.4495C63.229 14.9417 64.4818 16.3177 66.5375 16.3177C67.9662 16.3177 68.8865 15.6588 69.3758 14.9029C69.3758 15.2712 69.4149 15.7944 69.4737 16.0464H71.862C71.8033 15.7169 71.7449 15.0386 71.7449 14.5348V9.84482C71.7449 7.92622 70.6093 6.22083 67.5555 6.22083C64.9713 6.22083 63.5811 7.86807 63.4248 9.36033L65.7347 9.84482C65.8131 9.0115 66.4395 8.29445 67.5747 8.29445C68.6713 8.29445 69.1998 8.85646 69.1998 9.53475C69.1998 9.86421 69.0238 10.1355 68.4755 10.2131L66.1068 10.5619C64.5015 10.7945 63.229 11.744 63.229 13.4495ZM67.0854 14.3991C66.2438 14.3991 65.8325 13.8565 65.8325 13.2945C65.8325 12.558 66.361 12.1898 67.0268 12.0929L69.1998 11.7634V12.1898C69.1998 13.8759 68.1818 14.3991 67.0854 14.3991Z"
+          fill="currentColor"
+        />
+        <path
+          d="M76.895 16.0465V14.8837C77.4038 15.6976 78.4217 16.279 79.7531 16.279C82.4941 16.279 84.2951 14.1278 84.2951 11.2403C84.2951 8.4108 82.6701 6.25965 79.851 6.25965C78.4217 6.25965 77.3648 6.8798 76.934 7.55806V2.01546H74.3696V16.0465H76.895ZM81.6911 11.2596C81.6911 13.0038 80.6341 13.9728 79.3028 13.9728C77.9912 13.9728 76.895 12.9845 76.895 11.2596C76.895 9.51543 77.9912 8.56584 79.3028 8.56584C80.6341 8.56584 81.6911 9.51543 81.6911 11.2596Z"
+          fill="currentColor"
+        />
+        <path
+          d="M85.7692 13.4495C85.7692 14.9417 87.022 16.3177 89.0776 16.3177C90.5065 16.3177 91.4269 15.6588 91.916 14.9029C91.916 15.2712 91.9554 15.7944 92.014 16.0464H94.4023C94.3439 15.7169 94.2851 15.0386 94.2851 14.5348V9.84482C94.2851 7.92622 93.1495 6.22083 90.0955 6.22083C87.5115 6.22083 86.1216 7.86807 85.965 9.36033L88.2747 9.84482C88.3533 9.0115 88.9798 8.29445 90.1149 8.29445C91.2115 8.29445 91.74 8.85646 91.74 9.53475C91.74 9.86421 91.5638 10.1355 91.0156 10.2131L88.647 10.5619C87.0418 10.7945 85.7692 11.744 85.7692 13.4495ZM89.6258 14.3991C88.784 14.3991 88.3727 13.8565 88.3727 13.2945C88.3727 12.558 88.9012 12.1898 89.5671 12.0929L91.74 11.7634V12.1898C91.74 13.8759 90.722 14.3991 89.6258 14.3991Z"
+          fill="currentColor"
+        />
+        <path
+          d="M96.087 13.3913C96.2042 14.4766 97.2028 16.3371 100.1 16.3371C102.626 16.3371 103.839 14.7479 103.839 13.1976C103.839 11.8022 102.88 10.6588 100.981 10.2712L99.6105 9.98049C99.082 9.88359 98.7299 9.5929 98.7299 9.12777C98.7299 8.58512 99.2778 8.17818 99.963 8.17818C101.06 8.17818 101.471 8.89521 101.549 9.45725L103.722 8.97275C103.604 7.94561 102.684 6.22083 99.9436 6.22083C97.8683 6.22083 96.3416 7.63555 96.3416 9.34094C96.3416 10.6781 97.183 11.7828 99.043 12.1898L100.316 12.4805C101.06 12.6355 101.353 12.9844 101.353 13.4107C101.353 13.9146 100.942 14.3603 100.081 14.3603C98.9451 14.3603 98.3776 13.6626 98.3188 12.9068L96.087 13.3913Z"
+          fill="currentColor"
+        />
+        <path
+          d="M107.794 10.1937C107.852 9.32158 108.596 8.31381 109.947 8.31381C111.435 8.31381 112.062 9.24406 112.101 10.1937H107.794ZM112.355 12.6743C112.042 13.527 111.376 14.1278 110.163 14.1278C108.87 14.1278 107.794 13.2169 107.735 11.9573H114.626C114.626 11.9184 114.665 11.5309 114.665 11.1626C114.665 8.10064 112.884 6.22083 109.908 6.22083C107.441 6.22083 105.17 8.19753 105.17 11.2402C105.17 14.4572 107.5 16.3371 110.143 16.3371C112.512 16.3371 114.039 14.9611 114.528 13.3138L112.355 12.6743Z"
+          fill="currentColor"
+        />
+      </g>
+      <defs>
+        <linearGradient
+          id="paint0_linear_4671_51136"
+          x1="11.4954"
+          y1="11.1486"
+          x2="19.3439"
+          y2="14.4777"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop stopColor="#249361" />
+          <stop offset="1" stopColor="#3ECF8E" />
+        </linearGradient>
+        <linearGradient
+          id="paint1_linear_4671_51136"
+          x1="8.00382"
+          y1="6.42177"
+          x2="11.5325"
+          y2="13.1398"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop />
+          <stop offset="1" stopOpacity="0" />
+        </linearGradient>
+        <clipPath id="clip0_4671_51136">
+          <rect
+            width="113.85"
+            height="21.8943"
+            fill="currentColor"
+            transform="translate(0.922119 0.456161)"
+          />
+        </clipPath>
+        <clipPath id="clip1_4671_51136">
+          <rect
+            width="21.3592"
+            height="21.8943"
+            fill="currentColor"
+            transform="translate(0.919006 0.497101)"
+          />
+        </clipPath>
+      </defs>
+    </svg>
+  );
+}
+</file>
+
+<file path="components/theme-switcher.tsx">
+"use client";
+
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Laptop, Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
+
+const ThemeSwitcher = () => {
+  const [mounted, setMounted] = useState(false);
+  const { theme, setTheme } = useTheme();
+
+  // useEffect only runs on the client, so now we can safely show the UI
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
+
+  const ICON_SIZE = 16;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size={"sm"}>
+          {theme === "light" ? (
+            <Sun
+              key="light"
+              size={ICON_SIZE}
+              className={"text-muted-foreground"}
+            />
+          ) : theme === "dark" ? (
+            <Moon
+              key="dark"
+              size={ICON_SIZE}
+              className={"text-muted-foreground"}
+            />
+          ) : (
+            <Laptop
+              key="system"
+              size={ICON_SIZE}
+              className={"text-muted-foreground"}
+            />
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-content" align="start">
+        <DropdownMenuRadioGroup
+          value={theme}
+          onValueChange={(e) => setTheme(e)}
+        >
+          <DropdownMenuRadioItem className="flex gap-2" value="light">
+            <Sun size={ICON_SIZE} className="text-muted-foreground" />{" "}
+            <span>Light</span>
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem className="flex gap-2" value="dark">
+            <Moon size={ICON_SIZE} className="text-muted-foreground" />{" "}
+            <span>Dark</span>
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem className="flex gap-2" value="system">
+            <Laptop size={ICON_SIZE} className="text-muted-foreground" />{" "}
+            <span>System</span>
+          </DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
+export { ThemeSwitcher };
+</file>
+
+<file path="db/index.ts">
+import { drizzle } from 'drizzle-orm/postgres-js'
+import postgres from 'postgres'
+
+const connectionString = process.env.DATABASE_URL
+if (!connectionString) {
+    throw new Error('DATABASE_URL is not set')
+}
+
+// Disable prefetch as it is not supported for "Transaction" pool mode
+export const client = postgres(connectionString, { prepare: false })
+export const db = drizzle(client);
+</file>
+
+<file path="drizzle/0000_nappy_callisto.sql">
+CREATE TABLE "instruments" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "instruments_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"name" text NOT NULL
+);
+--> statement-breakpoint
+ALTER TABLE "instruments" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint
+CREATE POLICY "public can read instruments" ON "instruments" AS PERMISSIVE FOR SELECT TO "anon" USING (true);
+</file>
+
+<file path="lib/utils.ts">
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+import { redirect } from "next/navigation";
+
+/**
+ * Redirects to a specified path with an encoded message as a query parameter.
+ * @param {('error' | 'success')} type - The type of message, either 'error' or 'success'.
+ * @param {string} path - The path to redirect to.
+ * @param {string} message - The message to be encoded and added as a query parameter.
+ * @returns {never} This function doesn't return as it triggers a redirect.
+ */
+export function encodedRedirect(
+  type: "error" | "success",
+  path: string,
+  message: string,
+) {
+  return redirect(`${path}?${type}=${encodeURIComponent(message)}`);
+}
+
+/**
+ * Merges multiple class values into a single string of class names.
+ * @param {ClassValue[]} inputs - The class values to merge.
+ * @returns {string} A string of class names.
+ */
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+</file>
+
+<file path=".env.example">
+# Update these with your Supabase details from your project settings > API
+# https://app.supabase.com/project/_/settings/api
+NEXT_PUBLIC_SUPABASE_URL=your-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+DATABASE_URL=your-database-url
+</file>
+
+<file path=".env.test.example">
+# edit .env.example to run tests against tessting db
+NEXT_PUBLIC_SUPABASE_URL=your-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+DATABASE_URL=your-database-url
+</file>
+
+<file path="components.json">
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "default",
+  "rsc": true,
+  "tsx": true,
+  "tailwind": {
+    "config": "tailwind.config.ts",
+    "css": "app/globals.css",
+    "baseColor": "neutral",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils"
+  }
+}
+</file>
+
+<file path="drizzle.config.ts">
+import {
+  type Config
+} from "drizzle-kit";
+import 'dotenv/config'; // load .env
+
+
+if (process.env.DATABASE_URL === undefined) {
+  throw new Error("DATABASE_URL is not set");
+}
+
+export default {
+  schema: "./db/schema.ts",
+  dialect: "postgresql",
+  out: "drizzle",
+  dbCredentials: {
+    url: process.env.DATABASE_URL,
+  },
+} satisfies Config;
+</file>
+
+<file path="middleware.ts">
+import { type NextRequest } from "next/server";
+import { updateSession } from "@/lib/supabase/middleware";
+
+export async function middleware(request: NextRequest) {
+  return await updateSession(request);
+}
+
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - images - .svg, .png, .jpg, .jpeg, .gif, .webp
+     * Feel free to modify this pattern to include more paths.
+     */
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
+};
+</file>
+
+<file path="next.config.js">
+/** @type {import('next').NextConfig} */
+const nextConfig = {};
+
+module.exports = nextConfig;
+</file>
+
+<file path="postcss.config.js">
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+};
+</file>
+
+<file path="tailwind.config.ts">
+import type { Config } from "tailwindcss";
+
+const config = {
+  darkMode: ["class"],
+  content: [
+    "./pages/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./app/**/*.{ts,tsx}",
+    "./src/**/*.{ts,tsx}",
+  ],
+  prefix: "",
+  theme: {
+    container: {
+      center: true,
+      padding: "2rem",
+      screens: {
+        "2xl": "1400px",
+      },
+    },
+    extend: {
+      colors: {
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
+        },
+        secondary: {
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
+      },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
+      },
+      keyframes: {
+        "accordion-down": {
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
+      },
+    },
+  },
+  plugins: [require("tailwindcss-animate")],
+} satisfies Config;
+
+export default config;
+</file>
+
+<file path="tsconfig.json">
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "jest.config.js"],
+  "exclude": ["node_modules"]
+}
+</file>
+
+<file path="vitest.config.mts">
+import { defineConfig } from 'vitest/config'
+import react from '@vitejs/plugin-react'
+import tsconfigPaths from 'vite-tsconfig-paths'
+import { resolve } from 'path'
+
+export default defineConfig({
+    plugins: [tsconfigPaths(), react()],
+    test: {
+        environment: 'jsdom',
+        include: ['**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+        globals: true,
+        setupFiles: ['./vitest.setup.ts']
+    },
+    resolve: {
+        alias: {
+            '@': resolve(__dirname, './'),
+        },
+    },
+})
+</file>
+
+<file path="vitest.setup.ts">
+// Load environment variables from .env for Vitest
+import 'dotenv/config';
+import '@testing-library/jest-dom';
+</file>
+
+<file path="app/protected/page.tsx">
+import FetchDataSteps from "@/components/tutorial/fetch-data-steps";
+import { db } from "@/db";
+import { instruments } from "@/db/schema";
+import { createClient } from "@/lib/supabase/server";
+import { InfoIcon } from "lucide-react";
+import { redirect } from "next/navigation";
+
+export default async function ProtectedPage() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+
+  if (!user) {
+    return redirect("/sign-in");
+  }
+
+  // pull all instruments from the db with drizzle
+  const allInstruments = await db.select().from(instruments);
+
+  return (
+    <div className="flex-1 w-full flex flex-col gap-12">
+      <div className="w-full">
+        <div className="bg-accent text-sm p-3 px-5 rounded-md text-foreground flex gap-3 items-center">
+          <InfoIcon size="16" strokeWidth={2} />
+          This is a protected page that you can only see as an authenticated
+          user
+        </div>
+      </div>
+      <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-2 items-start">
+          <h2 className="font-bold text-2xl mb-4">Your user details</h2>
+          <pre className="text-xs font-mono p-3 rounded border max-h-32 overflow-auto">
+            {JSON.stringify(user, null, 2)}
+          </pre>
+        </div>
+        <div className="flex flex-col gap-2 items-start">
+          <h2 className="font-bold text-2xl mb-4">Instruments pulled from DB with Drizzle</h2>
+          <pre data-testid="instruments-from-drizzle" className="text-xs font-mono p-3 rounded border max-h-32 overflow-auto">
+            {JSON.stringify(allInstruments, null, 2)}
+          </pre>
+        </div>
+      </div>
+      <div>
+        <h2 className="font-bold text-2xl mb-4">Next steps</h2>
+        <FetchDataSteps />
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="app/utils/add.test.ts">
+import { add } from "./add";
+import { test, expect, describe } from 'vitest';
+
+describe('add function', () => {
+  test("Test functions that import server-only", () => {
+    expect(add(1, 2)).toBe(3);
+  });
+});
+</file>
+
+<file path="app/utils/add.ts">
+export function add(a: number, b: number) {
+  return a + b;
+}
+</file>
+
+<file path="app/counter.test.tsx">
+import { fireEvent, render, screen } from "@testing-library/react";
+import Counter from "./counter";
+import { it, expect, describe } from 'vitest';
+
+describe("Counter", () => {
+  it("App Router: Works with Client Components (React State)", () => {
+    render(<Counter />);
+    expect(screen.getByRole("heading")).toHaveTextContent("0");
+    fireEvent.click(screen.getByRole("button"));
+    expect(screen.getByRole("heading")).toHaveTextContent("1");
+  });
+});
+</file>
+
+<file path="app/page.tsx">
+import Hero from "@/components/hero";
+import ConnectSupabaseSteps from "@/components/tutorial/connect-supabase-steps";
+import SignUpUserSteps from "@/components/tutorial/sign-up-user-steps";
+import { hasEnvVars } from "@/utils/supabase/check-env-vars";
+import { db } from "@/db";
+import { instruments } from "@/db/schema";
+
+export default async function Index() {
+  const allInstruments = await db.select().from(instruments);
+  return (
+    <>
+      <Hero />
+      <main className="flex-1 flex flex-col gap-6 px-4">
+        <h2 className="font-medium text-xl mb-4" role="heading">Next steps</h2>
+        {hasEnvVars ? <SignUpUserSteps /> : <ConnectSupabaseSteps />}
+        <pre data-testid="drizzle-test-result" className="text-xs font-mono p-3 rounded border max-h-32 overflow-auto">
+          {JSON.stringify(allInstruments, null, 2)}
+        </pre>
+      </main>
+    </>
+  );
+}
+</file>
+
+<file path="components/tutorial/fetch-data-steps.tsx">
+import { TutorialStep } from "./tutorial-step";
+import { CodeBlock } from "./code-block";
+
+const create = `-- Create the table (or just run npx drizzle-kit push in this repo) 
+create table instruments (
+  id bigint primary key generated always as identity,
+  name text not null
+);
+
+-- Insert some sample data into the table
+insert into instruments (name)
+values
+  ('violin'),
+  ('viola'),
+  ('cello');
+alter table instruments enable row level security;
+`.trim();
+
+const server = `import { createClient } from '@/utils/supabase/server'
+
+export default async function Page() {
+  const supabase = createClient()
+  const { data: instruments } = await supabase.from('instruments').select()
+
+  return <pre>{JSON.stringify(instruments, null, 2)}</pre>
+}
+`.trim();
+
+const client = `'use client'
+
+import { createClient } from '@/utils/supabase/client'
+import { useEffect, useState } from 'react'
+
+export default function Page() {
+  const [instruments, setInstruments] = useState<any[] | null>(null)
+  const supabase = createClient()
+
+  useEffect(() => {
+    const getData = async () => {
+      const { data } = await supabase.from('instruments').select()
+      setInstruments(data)
+    }
+    getData()
+  }, [])
+
+  return <pre>{JSON.stringify(instruments, null, 2)}</pre>
+}
+`.trim();
+
+export default function FetchDataSteps() {
+  return (
+    <ol className="flex flex-col gap-6">
+      <TutorialStep title="Create some tables and insert some data">
+        <p>
+          Head over to the{" "}
+          <a
+            href="https://supabase.com/dashboard/project/_/editor"
+            className="font-bold hover:underline text-foreground/80"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Table Editor
+          </a>{" "}
+          for your Supabase project to create a table and insert some example
+          data. If you're stuck for creativity, you can copy and paste the
+          following into the{" "}
+          <a
+            href="https://supabase.com/dashboard/project/_/sql/new"
+            className="font-bold hover:underline text-foreground/80"
+            target="_blank"
+            rel="noreferrer"
+          >
+            SQL Editor
+          </a>{" "}
+          and click RUN!
+        </p>
+        <CodeBlock code={create} />
+      </TutorialStep>
+
+      <TutorialStep title="Query Supabase data from Next.js">
+        <p>
+          To create a Supabase client and query data from an Async Server
+          Component, create a new page.tsx file at{" "}
+          <span className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-xs font-medium text-secondary-foreground border">
+            /app/instruments/page.tsx
+          </span>{" "}
+          and add the following.
+        </p>
+        <CodeBlock code={server} />
+        <p>Alternatively, you can use a Client Component.</p>
+        <CodeBlock code={client} />
+      </TutorialStep>
+
+      <TutorialStep title="Build in a weekend and scale to millions!">
+        <p>You're ready to launch your product to the world! 🚀</p>
+      </TutorialStep>
+    </ol>
+  );
+}
+</file>
+
+<file path="drizzle/meta/_journal.json">
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1747106821902,
+      "tag": "0000_nappy_callisto",
+      "breakpoints": true
+    }
+  ]
+}
+</file>
+
+<file path="drizzle/meta/0000_snapshot.json">
+{
+  "id": "5c4988f4-5c61-4760-91c8-43a3c012451f",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.instruments": {
+      "name": "instruments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "instruments_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "public can read instruments": {
+          "name": "public can read instruments",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "anon"
+          ],
+          "using": "true"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
+</file>
+
+<file path=".gitignore">
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+autotax-app-2023
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
+.env
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+.aider*
+</file>
+
+<file path="llms.md">
+# LLM Conventions
+Use these conventions on this project. Edit them when versions are upgraded or conventions change.
+
+* Database: Supabase (Postgres)
+* ORM: Drizzle Version 0.43.1
+* Framework: Nextjs v15.3
+* UI: shadcn, tailwind
+* Testing: vitest (pnpm run test)
+
+
+## ORM: Drizzle Version 0.43.1 (current version on this project)
+
+### Example Schemas
+From: https://orm.drizzle.team/docs/sql-schema-declaration
+
+```typescript
+import { AnyPgColumn } from "drizzle-orm/pg-core";
+import { pgEnum, pgTable as table } from "drizzle-orm/pg-core";
+import * as t from "drizzle-orm/pg-core";
+export const rolesEnum = pgEnum("roles", ["guest", "user", "admin"]);
+export const users = table(
+  "users",
+  {
+    id: t.integer().primaryKey().generatedAlwaysAsIdentity(),
+    firstName: t.varchar("first_name", { length: 256 }),
+    lastName: t.varchar("last_name", { length: 256 }),
+    email: t.varchar().notNull(),
+    invitee: t.integer().references((): AnyPgColumn => users.id),
+    role: rolesEnum().default("guest"),
+  },
+  (table) => [
+    t.uniqueIndex("email_idx").on(table.email)
+  ]
+);
+export const posts = table(
+  "posts",
+  {
+    id: t.integer().primaryKey().generatedAlwaysAsIdentity(),
+    slug: t.varchar().$default(() => generateUniqueString(16)),
+    title: t.varchar({ length: 256 }),
+    ownerId: t.integer("owner_id").references(() => users.id),
+  },
+  (table) => [
+    t.uniqueIndex("slug_idx").on(table.slug),
+    t.index("title_idx").on(table.title),
+  ]
+);
+export const comments = table("comments", {
+  id: t.integer().primaryKey().generatedAlwaysAsIdentity(),
+  text: t.varchar({ length: 256 }),
+  postId: t.integer("post_id").references(() => posts.id),
+  ownerId: t.integer("owner_id").references(() => users.id),
+});
+```
+
+## Row Level Security (RLS)
+From: https://orm.drizzle.team/docs/rls
+
+
+Example of pgPolicy with all available properties
+
+```typescript
+import { sql } from 'drizzle-orm';
+import { integer, pgPolicy, pgRole, pgTable } from 'drizzle-orm/pg-core';
+export const admin = pgRole('admin');
+export const users = pgTable('users', {
+	id: integer(),
+}, (t) => [
+	pgPolicy('policy', {
+		as: 'permissive',
+		to: admin,
+		for: 'delete',
+		using: sql``,
+		withCheck: sql``,
+	}),
+]);
+```
+
+### Policy options
+
+## Policies
+
+To fully leverage RLS, you can define policies within a Drizzle table.
+
+<Callout title='info'>
+In PostgreSQL, policies should be linked to an existing table. Since policies are always associated with a specific table, we decided that policy definitions should be defined as a parameter of `pgTable`
+</Callout>
+
+**Example of pgPolicy with all available properties**
+```ts
+import { sql } from 'drizzle-orm';
+import { integer, pgPolicy, pgRole, pgTable } from 'drizzle-orm/pg-core';
+
+export const admin = pgRole('admin');
+
+export const users = pgTable('users', {
+	id: integer(),
+}, (t) => [
+	pgPolicy('policy', {
+		as: 'permissive',
+		to: admin,
+		for: 'delete',
+		using: sql``,
+		withCheck: sql``,
+	}),
+]);
+```
+
+**Policy options**
+|                          |                                                                                                                                           |
+| :----------------------- | :---------------------------------------------------------------------------------------------------------------------------------------- |
+| `as`                     | Possible values are `permissive` or `restrictive`                                                                                         |
+| `to`                     | Specifies the role to which the policy applies. Possible values include `public`, `current_role`, `current_user`, `session_user`, or any other role name as a string. You can also reference a `pgRole` object. |
+| `for`                    | Defines the commands this policy will be applied to. Possible values are `all`, `select`, `insert`, `update`, `delete`.                   |
+| `using`                  | The SQL statement that will be applied to the `USING` part of the policy creation statement.                                              |
+| `withCheck`              | An SQL statement that will be applied to the `WITH CHECK` part of the policy creation statement.                                          |
+
+
+**Link Policy to an existing table**
+
+There are situations where you need to link a policy to an existing table in your database. 
+The most common use case is with database providers like `Neon` or `Supabase`, where you need to add a policy 
+to their existing tables. In this case, you can use the `.link()` API
+
+```ts
+import { sql } from "drizzle-orm";
+import { pgPolicy } from "drizzle-orm/pg-core";
+import { authenticatedRole, realtimeMessages } from "drizzle-orm/supabase";
+
+export const policy = pgPolicy("authenticated role insert policy", {
+  for: "insert",
+  to: authenticatedRole,
+  using: sql``,
+}).link(realtimeMessages);
+```
+
+## Using Drizzle with Supabase
+From: https://orm.drizzle.team/docs/rls#using-with-supabase
+
+We also have a /supabase import with a set of predefined roles marked as existing, which you can use in your schema. This import will be extended in a future release with more functions and helpers to make using RLS and Supabase simpler.
+
+```typescript
+// drizzle-orm/supabase
+export const anonRole = pgRole('anon').existing();
+export const authenticatedRole = pgRole('authenticated').existing();
+export const serviceRole = pgRole('service_role').existing();
+export const postgresRole = pgRole('postgres_role').existing();
+export const supabaseAuthAdminRole = pgRole('supabase_auth_admin').existing();
+```
+
+For example, you can use the Supabase predefined roles like this:
+
+```typescript
+import { sql } from 'drizzle-orm';
+import { serviceRole } from 'drizzle-orm/supabase';
+import { integer, pgPolicy, pgRole, pgTable } from 'drizzle-orm/pg-core';
+export const admin = pgRole('admin');
+export const users = pgTable('users', {
+	id: integer(),
+}, (t) => [
+	pgPolicy(`policy-insert`, {
+		for: 'insert',
+		to: serviceRole,
+		withCheck: sql`false`,
+	}),
+]);
+```
+
+The /supabase import also includes predefined tables and functions that you can use in your application
+
+```typescript
+// drizzle-orm/supabase
+const auth = pgSchema('auth');
+export const authUsers = auth.table('users', {
+	id: uuid().primaryKey().notNull(),
+});
+const realtime = pgSchema('realtime');
+export const realtimeMessages = realtime.table(
+	'messages',
+	{
+		id: bigserial({ mode: 'bigint' }).primaryKey(),
+		topic: text().notNull(),
+		extension: text({
+			enum: ['presence', 'broadcast', 'postgres_changes'],
+		}).notNull(),
+	},
+);
+export const authUid = sql`(select auth.uid())`;
+export const realtimeTopic = sql`realtime.topic()`;
+```
+
+This allows you to use it in your code, and Drizzle Kit will treat them as existing databases, using them only as information to connect to other entities
+
+```typescript
+import { foreignKey, pgPolicy, pgTable, text, uuid } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm/sql";
+import { authenticatedRole, authUsers } from "drizzle-orm/supabase";
+export const profiles = pgTable(
+  "profiles",
+  {
+    id: uuid().primaryKey().notNull(),
+    email: text().notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.id],
+	  // reference to the auth table from Supabase
+      foreignColumns: [authUsers.id],
+      name: "profiles_id_fk",
+    }).onDelete("cascade"),
+    pgPolicy("authenticated can view all profiles", {
+      for: "select",
+	  // using predefined role from Supabase
+      to: authenticatedRole,
+      using: sql`true`,
+    }),
+  ]
+);
+```
+
+Let’s check an example of adding a policy to a table that exists in Supabase
+
+```typescript
+import { sql } from "drizzle-orm";
+import { pgPolicy } from "drizzle-orm/pg-core";
+import { authenticatedRole, realtimeMessages } from "drizzle-orm/supabase";
+export const policy = pgPolicy("authenticated role insert policy", {
+  for: "insert",
+  to: authenticatedRole,
+  using: sql``,
+}).link(realtimeMessages);
+```
+</file>
+
+<file path="__tests__/index.test.tsx">
+import Index from "@/app/page";
+import { render, screen } from "@testing-library/react";
+import { describe, it, expect } from 'vitest';
+
+describe("Home", () => {
+  it("renders a heading", async () => {
+    render(await (Index()));
+    const instrumentsOutput = screen.getByTestId("drizzle-test-result");
+    expect(instrumentsOutput.innerHTML).toContain("violin");
+  });
+});
+</file>
+
+<file path="app/page.test.tsx">
+import { render, screen } from "@testing-library/react";
+import Page from "./page";
+import { it, expect, describe } from 'vitest';
+
+describe("Page component", () => {
+  it("App Router: Works with Server Components", async () => {
+    render(await Page());
+    const heading = screen.getByRole("heading", {
+      name: /next steps/i,
+    });
+    expect(heading).toBeInTheDocument();
+  });
+
+  it("Tests that instruments are pulled from the db with Drizzle", async () => {
+    render(await Page());
+    const instrumentsFromDrizzle = screen.getByTestId("drizzle-test-result");
+    expect(instrumentsFromDrizzle).toBeInTheDocument();
+  });
+});
+</file>
+
+<file path="db/schema.ts">
+import { sql } from 'drizzle-orm';
+import { pgTable, pgPolicy } from "drizzle-orm/pg-core";
+import * as t from "drizzle-orm/pg-core";
+import { anonRole } from 'drizzle-orm/supabase';
+
+export const instruments = pgTable(
+    'instruments',
+    {
+        id: t.integer('id').primaryKey().generatedAlwaysAsIdentity(),
+        name: t.text('name').notNull()
+    },
+    (table) => [
+        // Enable row level security policy for public read access
+        pgPolicy('public can read instruments', {
+            for: 'select',
+            to: anonRole,
+            using: sql`true`
+        })
+    ]
+);
+</file>
+
+<file path="package.json">
+{
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "dev:inspect": "NODE_OPTIONS='--inspect' next dev",
+    "db:generate": "drizzle-kit generate && echo 'Next, manually apply generated sql to your database.'",
+    "build": "next build",
+    "start": "next start",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:inspect": "node --inspect=0.0.0.0:9229 node_modules/.bin/vitest --run --no-threads",
+    "test:ci": "vitest run --coverage",
+    "copy-context": "echo 'copying full source code to clipboard' && repomix --copy"
+  },
+  "dependencies": {
+    "@radix-ui/react-checkbox": "^1.1.1",
+    "@radix-ui/react-dropdown-menu": "^2.1.1",
+    "@radix-ui/react-label": "^2.1.0",
+    "@radix-ui/react-slot": "^1.1.0",
+    "@supabase/ssr": "latest",
+    "@supabase/supabase-js": "latest",
+    "autoprefixer": "10.4.17",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "dotenv": "^16.4.5",
+    "drizzle-orm": "^0.43.1",
+    "eslint-config-next": "^15.3.2",
+    "geist": "^1.2.1",
+    "lucide-react": "^0.436.0",
+    "next": "15.3.2",
+    "next-themes": "^0.3.0",
+    "postgres": "^3.4.5",
+    "prettier": "^3.3.3",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "14.1.2",
+    "@types/node": "20.10.6",
+    "@types/pg": "^8.11.10",
+    "@types/react": "18.2.46",
+    "@types/react-dom": "18.2.18",
+    "@vitejs/plugin-react": "^4.4.1",
+    "drizzle-kit": "^0.31.1",
+    "install": "^0.13.0",
+    "jest": "29.7.0",
+    "jest-environment-jsdom": "29.7.0",
+    "jsdom": "^26.1.0",
+    "postcss": "8.4.33",
+    "tailwind-merge": "^2.5.2",
+    "tailwindcss": "3.4.1",
+    "tailwindcss-animate": "^1.0.7",
+    "tsx": "^4.19.2",
+    "typescript": "5.3.3",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^3.1.3"
+  }
+}
+</file>
+
+<file path="README.md">
+<h1 align="center">Nextjs LLM Supastarter 🤩<br /> Next.js v15, Supabase, Drizzle, Vitest</h1>
+<p role="heading" align="center">
+  Leverage LLMs to generate and mtaintain durable, documented, tested apps with Next.js 15 and Supabase 
+</p>
+
+>   <p>This project was originally created for <a href="https://x.com/rsweetland/status/1880370865138987010"> a presentation</a> I gave at <a href="https://lu.ma/AISummitSiliconValley2025">AI Summit 2025</a> on LLM-driven development (before Vibe Coding was a thing)
+
+This starter (forked from my simpler <a href="https://github.com/rsweetland/next-tdd-supastarter">tdd-next-supastarter</a>) integrates <a href="https://nextjs.org/blog/next-15">Next.js 15</a>, with the Vercel boilerplate examples from <a href="https://github.com/vercel/next.js/tree/v15.0.2/examples/with-supabase">with-supabase</a>, <a href="https://github.com/vercel/next.js/tree/v15.0.2/examples/with-jest">with-jest</a>, and <a href="https://github.com/vercel/examples/tree/%40vercel/examples-ui%402.0.3/storage/postgres-drizzle">postgres-drizzle</a></li>, fixes a few issues, sets up a hyper-efficient run-on-save, debugger-ready TDD workflow, tested in <a href="https://www.cursor.com/">Cursor</a> and ready to be used in LLM dev workflows.</p><br />
+
+<p align="center">
+  <a href="#features"><strong>💎 Features</strong></a> ·
+  <a href="#clone-and-run"><strong>🚗 Clone and run</strong></a> ·
+  <a href="#testing"><strong>🧪 Streamlined testing</strong></a> ·
+  <a href="#feedback-and-issues"><strong>👋 Feedback and issues</strong></a>
+</p>
+<br/>
+
+## Features
+- `llms.md` for your Cursor, Windsurf, Cline, Aider or other AI dev
+- Run-on-save [Vitest](https://vitest.dev/) (video below 📺)
+- Debugger for both test and dev scripts. Just add breakpoints
+- Works across the [Next.js](https://nextjs.org) stack
+  - App Router
+  - Middleware
+  - Client
+  - Server
+- User signup, auth and protected routes
+- Styling with [Tailwind CSS](https://tailwindcss.com)
+- Components with [shadcn/ui](https://ui.shadcn.com/)
+- [Drizzle](https://orm.drizzle.team/) integration, which assumes the [Supabase with Next.js schema](https://supabase.com/docs/guides/getting-started/quickstarts/nextjs) 
+- Simple migrations
+
+## Clone and run
+
+1. Clone this repo
+1. [Set up a Supabase project](https://supabase.com/docs/guides/getting-started/quickstarts/nextjs)
+1. Copy settings in Supabase: `Supabase dashboard > Connect (top left) > App Frameworks > Next.js`
+2.  Copy `.env.example`  to `.env`  and update:<br />
+    * `NEXT_PUBLIC_SUPABASE_URL` 
+    * `NEXT_PUBLIC_SUPABASE_ANON_KEY`  Both can be found in [your Supabase project's API settings](https://app.supabase.*com/project/_/settings/api).
+    * `DATABASE_URL`  Find from the Supabase Dashboard > Connect
+3. Install dependencies
+    ```bash
+    pnpm install
+    ```
+4. Set up Supabase database demo tables for instruments. Run this, or run the SQL from `migrations` folder
+    ```bash
+    npx drizzle-kit push
+    ```
+   
+5. Run the Next.js local development server:
+
+   ```bash
+   pnpm run dev
+   ```
+   You can also run it in debug mode. 
+   ```bash
+   pnpm run dev:inspect
+   ```
+   The included `launch.json` file sets up a "Debug Next.js" configuration to attach to this process.
+
+> Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
+
+## AI Dev
+`llms.md` describes versions and conventions in this project. Instruct your AI coding assistnat of choice to load it into its default context.
+
+## Testing
+
+<p align="center">
+  
+[TDD Workflow](https://github.com/user-attachments/assets/06b87ae3-1f16-4b77-b8b9-5d0eb181462e)
+
+</p>
+
+
+Run and watch tests:
+
+1. Set up test env
+
+   ```bash
+   cp .env.test.example .env.test
+   ```
+   Edit `.env.test` with values from your staging or test database
+   
+2. Run and debug tests using [Javascript Debug Terminal](https://vitest.dev/guide/debugging). 
+   You can also run "Debug Current Test File" launch.json configuration from a VS Code Compatible debugger
+
+After debugger is attached, hit save to run tests. Add breakpoints. See to see what's going on. 👀
+
+## Database Migrations
+When your schema changes: 
+* run `npm run db:generate`
+* look in `drizzle` folder for the newly generated sql file
+* manually apply the sql to your database
+
+It's simple and durable way to operate on your production and dev database.
+
+## UI
+This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
+
+
+## Feedback and issues
+
+This is not an official Supabase or Vercel project. It's just my own personal preference and dev workflow that I thought I would share. Feel free to create issues, fork and improve this project. Drop a ⭐️ if you'd like. Sometimes I am also hiring. Connect with me on Twitter <a href="https://twitter.com/rsweetland">@rsweetland</a>
+</file>
+
+</files>

@@ -17,11 +17,9 @@ This starter (forked from my simpler <a href="https://github.com/rsweetland/next
 <br/>
 
 ## Features
-- Bash tooling to invoke and manage your LLM (TODO)
-- Prompts as first class citizens (TODO)
-- Tooling to thoughtfully manage context (TODO)
-- Run-on-save [Vitest](https://vitest.dev/) tests with VS Code debugging preconfigured (video below 📺)
-- Debugger set up for both test and dev scripts. Just add breakpoints
+- `llms.md` for your Cursor, Windsurf, Cline, Aider or other AI dev
+- Run-on-save [Vitest](https://vitest.dev/) (video below 📺)
+- Debugger for both test and dev scripts. Just add breakpoints
 - Works across the [Next.js](https://nextjs.org) stack
   - App Router
   - Middleware
@@ -63,6 +61,11 @@ This starter (forked from my simpler <a href="https://github.com/rsweetland/next
    The included `launch.json` file sets up a "Debug Next.js" configuration to attach to this process.
 
 > Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
+
+## AI Dev
+`llms.md` describes versions and conventions in this project. Instruct your AI coding assistnat of choice to load it into its default context on specific tasks.
+
+Run `pnpm copy-context` to run [repomix](https://github.com/yamadashy/repomix) and copy the complete codebase to your clipboard. Paste this into a chat conversation with an advanced reasoning model for a productive conversation.
 
 ## Testing
 

@@ -9,7 +9,8 @@
     "test": "vitest",
     "test:watch": "vitest --watch",
     "test:inspect": "node --inspect=0.0.0.0:9229 node_modules/.bin/vitest --run --no-threads",
-    "test:ci": "vitest run --coverage"
+    "test:ci": "vitest run --coverage",
+    "copy-context": "echo 'copying full source code to clipboard' && npx repomix --copy"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.1.1",
