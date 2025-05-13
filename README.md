@@ -56,6 +56,12 @@ This starter (forked from my simpler <a href="https://github.com/rsweetland/next
    ```bash
    pnpm run dev
    ```
+   You can also run it in debug mode. 
+   ```bash
+   pnpm run dev:inspect
+   ```
+   The included `launch.json` file sets up a "Debug Next.js" configuration to attach to this process.
+
 > Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
 
 ## Testing
