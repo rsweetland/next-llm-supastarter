@@ -1,9 +1,6 @@
-/**
- * @jest-environment jsdom
- */
 import Index from "@/app/page";
 import { render, screen } from "@testing-library/react";
-import '@testing-library/jest-dom'
+import { describe, it, expect } from 'vitest';
 
 describe("Home", () => {
   it("renders a heading", async () => {

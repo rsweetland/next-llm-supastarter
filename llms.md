@@ -6,6 +6,7 @@ Use these conventions on this project. Edit them when versions are upgraded or c
 ### Example Schemas
 From: https://orm.drizzle.team/docs/sql-schema-declaration
 
+```typescript
 import { AnyPgColumn } from "drizzle-orm/pg-core";
 import { pgEnum, pgTable as table } from "drizzle-orm/pg-core";
 import * as t from "drizzle-orm/pg-core";
@@ -43,7 +44,7 @@ export const comments = table("comments", {
   postId: t.integer("post_id").references(() => posts.id),
   ownerId: t.integer("owner_id").references(() => users.id),
 });
-
+```
 
 ## Row Level Security (RLS)
 From: https://orm.drizzle.team/docs/rls

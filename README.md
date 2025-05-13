@@ -1,11 +1,10 @@
 
-<h1 align="center">Nextjs LLM Supastarter 🤩<br /> Next.js v15, Supabase, Drizzle, Jest </h1>
+<h1 align="center">Nextjs LLM Supastarter 🤩<br /> Next.js v15, Supabase, Drizzle, Vitest</h1>
 <p role="heading" align="center">
   Leverage LLMs to generate and mtaintain durable, documented, tested apps with Next.js 15 and Supabase 
 </p>
 
->   <h3>🧙‍♂️Upcoming Presentation on LLM Oriented Development</h3>
->   <p>This repo is evolving in preparation for for a presentation I will be giving at <a href="https://lu.ma/AISummitSiliconValley2025">AI Summit 2025</a> regarding the use of LLMs to sustainably generate production-grade code. Topics to be covered: maintaining LLM generated systems in production, LLMs as team members, knowledge management, observability simple CLI based workflows. Follow for updates.
+>   <p>This project was originally created for <a href="https://x.com/rsweetland/status/1880370865138987010"> a presentation</a> I gave at <a href="https://lu.ma/AISummitSiliconValley2025">AI Summit 2025</a> on LLM-driven development (before Vibe Coding was a thing)
 
 This starter (forked from my simpler <a href="https://github.com/rsweetland/next-tdd-supastarter">tdd-next-supastarter</a>) integrates <a href="https://nextjs.org/blog/next-15">Next.js 15</a>, with the Vercel boilerplate examples from <a href="https://github.com/vercel/next.js/tree/v15.0.2/examples/with-supabase">with-supabase</a>, <a href="https://github.com/vercel/next.js/tree/v15.0.2/examples/with-jest">with-jest</a>, and <a href="https://github.com/vercel/examples/tree/%40vercel/examples-ui%402.0.3/storage/postgres-drizzle">postgres-drizzle</a></li>, fixes a few issues, sets up a hyper-efficient run-on-save, debugger-ready TDD workflow, tested in <a href="https://www.cursor.com/">Cursor</a> and ready to be used in LLM dev workflows.</p><br />
 
@@ -21,7 +20,7 @@ This starter (forked from my simpler <a href="https://github.com/rsweetland/next
 - Bash tooling to invoke and manage your LLM (TODO)
 - Prompts as first class citizens (TODO)
 - Tooling to thoughtfully manage context (TODO)
-- Run-on-save [Jest](https://jestjs.io/) tests with VS Code debugging preconfigured (video below 📺)
+- Run-on-save [Vitest](https://vitest.dev/) tests with VS Code debugging preconfigured (video below 📺)
 - Debugger set up for both test and dev scripts. Just add breakpoints
 - Works across the [Next.js](https://nextjs.org) stack
   - App Router
@@ -45,21 +44,18 @@ This starter (forked from my simpler <a href="https://github.com/rsweetland/next
     * `DATABASE_URL`  Find from the Supabase Dashboard > Connect
 3. Install dependencies
     ```bash
-    npm install
+    pnpm install
     ```
 4. Set up Supabase database demo tables for instruments. Run this, or run the SQL from `migrations` folder
-```bash
-npx drizzle-kit push
-```
+    ```bash
+    npx drizzle-kit push
+    ```
    
 5. Run the Next.js local development server:
 
    ```bash
-   npm run dev
+   pnpm run dev
    ```
-
-2. This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
-
 > Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
 
 ## Testing
@@ -73,12 +69,17 @@ npx drizzle-kit push
 
 Run and watch tests:
 
-```bash
-  npm run test:inspect
-```
-A VS Code `launch.json` file is included, allowing you to just open Debug sidebar to attach the VS Code.
+1. Set up test env
 
-Just hit save to run tests. Add breakpoints. See to see what's going on. 🔬
+   ```bash
+   cp .env.test.example .env.test
+   ```
+   Edit `.env.test` with values from your staging or test database
+   
+2. Run and debug tests using [Javascript Debug Terminal](https://vitest.dev/guide/debugging). 
+   You can also run "Debug Current Test File" launch.json configuration from a VS Code Compatible debugger
+
+After debugger is attached, hit save to run tests. Add breakpoints. See to see what's going on. 👀
 
 ## Database Migrations
 When your schema changes: 
@@ -87,6 +88,10 @@ When your schema changes:
 * manually apply the sql to your database
 
 It's simple and durable way to operate on your production and dev database.
+
+## UI
+This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
+
 
 ## Feedback and issues
 

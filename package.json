@@ -6,9 +6,10 @@
     "db:generate": "drizzle-kit generate && echo 'Next, manually apply generated sql to your database.'",
     "build": "next build",
     "start": "next start",
-    "test": "jest --watchAll",
-    "test:inspect": "node --inspect=0.0.0.0:9229 node_modules/.bin/jest --runInBand --watchAll --setupFiles dotenv/config --detectOpenHandles",
-    "test:ci": "jest --ci"
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:inspect": "node --inspect=0.0.0.0:9229 node_modules/.bin/vitest --run --no-threads",
+    "test:ci": "vitest run --coverage"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.1.1",
@@ -32,21 +33,26 @@
     "react-dom": "18.2.0"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "6.1.5",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "14.1.2",
-    "@types/jest": "29.5.11",
     "@types/node": "20.10.6",
     "@types/pg": "^8.11.10",
     "@types/react": "18.2.46",
     "@types/react-dom": "18.2.18",
+    "@vitejs/plugin-react": "^4.4.1",
     "drizzle-kit": "^0.31.1",
+    "install": "^0.13.0",
     "jest": "29.7.0",
     "jest-environment-jsdom": "29.7.0",
+    "jsdom": "^26.1.0",
     "postcss": "8.4.33",
     "tailwind-merge": "^2.5.2",
     "tailwindcss": "3.4.1",
     "tailwindcss-animate": "^1.0.7",
     "tsx": "^4.19.2",
-    "typescript": "5.3.3"
+    "typescript": "5.3.3",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^3.1.3"
   }
 }
