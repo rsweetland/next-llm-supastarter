@@ -13,9 +13,9 @@ it("App Router: Works with Server Components", async () => {
 });
 
 
-it("Tests that notes are pulled from the db with Drizzle", async () => {
+it("Tests that instruments are pulled from the db with Drizzle", async () => {
   render(await Page());
-  const notesFromDrizzle = screen.getByTestId("drizzle-test-result");
-  expect(notesFromDrizzle).toBeInTheDocument();
+  const instrumentsFromDrizzle = screen.getByTestId("drizzle-test-result");
+  expect(instrumentsFromDrizzle).toBeInTheDocument();
 });
 

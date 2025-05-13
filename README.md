@@ -47,13 +47,18 @@ This starter (forked from my simpler <a href="https://github.com/rsweetland/next
     ```bash
     npm install
     ```
-4. Run the Next.js local development server:
+4. Set up Supabase database demo tables for instruments. Run this, or run the SQL from `migrations` folder
+```bash
+npx drizzle-kit push
+```
+   
+5. Run the Next.js local development server:
 
    ```bash
    npm run dev
    ```
 
-5. This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
+2. This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
 
 > Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
 

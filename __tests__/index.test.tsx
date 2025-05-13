@@ -8,7 +8,7 @@ import '@testing-library/jest-dom'
 describe("Home", () => {
   it("renders a heading", async () => {
     render(await (Index()));
-    const notesOutput = screen.getByTestId("drizzle-test-result");
-    expect(notesOutput.innerHTML).toContain("Today I created a Supabase project.");
+    const instrumentsOutput = screen.getByTestId("drizzle-test-result");
+    expect(instrumentsOutput.innerHTML).toContain("violin");
   });
 });

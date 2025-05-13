@@ -1,6 +1,6 @@
 import FetchDataSteps from "@/components/tutorial/fetch-data-steps";
 import { db } from "@/db";
-import { notes } from "@/db/schema";
+import { instruments } from "@/db/schema";
 import { createClient } from "@/utils/supabase/server";
 import { InfoIcon } from "lucide-react";
 import { redirect } from "next/navigation";
@@ -17,8 +17,8 @@ export default async function ProtectedPage() {
     return redirect("/sign-in");
   }
 
-  // pull all notes from the db with drizzle
-  const allNotes = await db.select().from(notes);
+  // pull all instruments from the db with drizzle
+  const allInstruments = await db.select().from(instruments);
 
   return (
     <div className="flex-1 w-full flex flex-col gap-12">
@@ -37,9 +37,9 @@ export default async function ProtectedPage() {
           </pre>
         </div>
         <div className="flex flex-col gap-2 items-start">
-          <h2 className="font-bold text-2xl mb-4">Notes pulled from DB with Drizzle</h2>
-          <pre test-id="notes-from-drizzle" className="text-xs font-mono p-3 rounded border max-h-32 overflow-auto">
-            {JSON.stringify(allNotes, null, 2)}
+          <h2 className="font-bold text-2xl mb-4">Instruments pulled from DB with Drizzle</h2>
+          <pre data-testid="instruments-from-drizzle" className="text-xs font-mono p-3 rounded border max-h-32 overflow-auto">
+            {JSON.stringify(allInstruments, null, 2)}
           </pre>
         </div>
       </div>

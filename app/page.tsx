@@ -3,10 +3,10 @@ import ConnectSupabaseSteps from "@/components/tutorial/connect-supabase-steps";
 import SignUpUserSteps from "@/components/tutorial/sign-up-user-steps";
 import { hasEnvVars } from "@/utils/supabase/check-env-vars";
 import { db } from "@/db";
-import { notes } from "@/db/schema";
+import { instruments } from "@/db/schema";
 
 export default async function Index() {
-  const allNotes = await db.select().from(notes);
+  const allInstruments = await db.select().from(instruments);
   return (
     <>
       <Hero />
@@ -14,7 +14,7 @@ export default async function Index() {
         <h2 className="font-medium text-xl mb-4" role="heading">Next steps</h2>
         {hasEnvVars ? <SignUpUserSteps /> : <ConnectSupabaseSteps />}
         <pre data-testid="drizzle-test-result" className="text-xs font-mono p-3 rounded border max-h-32 overflow-auto">
-          {JSON.stringify(allNotes, null, 2)}
+          {JSON.stringify(allInstruments, null, 2)}
         </pre>
       </main>
     </>
