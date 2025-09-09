@@ -230,3 +230,33 @@ import { authUid, realtimeTopic } from "drizzle-orm/supabase";
 ```
 
 The project is optimized for TDD workflow with run-on-save testing and integrated debugging support.
+
+## Code Review and Testing
+
+**After every major change**:
+1. Run tests with `pnpm test` to ensure nothing is broken
+2. Review test output and fix any failures
+3. Check if test coverage exists for the feature or fix just implemented
+4. If test coverage is lacking, ask: "Should I add tests for this feature/fix?"
+
+## LLM Special Keywords
+
+**"init" keyword**: When a user says "init", follow this initialization workflow:
+
+1. **Ask Setup Preferences**: 
+   - "Would you like to use local or remote Supabase?"
+   - "Would you like seed data or no seed data?"
+
+2. **Remote Supabase Path**:
+   - Direct them to follow instructions in the README for remote setup
+
+3. **Local Supabase Path**:
+   - Check if Supabase CLI is running: `supabase status`
+   - Try to start Supabase in current directory: `supabase start`
+   - If start fails, check for other Supabase instances: `supabase status --all`
+   - Offer to shut down conflicting instances if found
+   - Ensure Supabase is running locally before proceeding
+   - Copy environment file: `cp .env.example .env` (defaults are already configured)
+   - Reset database and seed: `pnpm run db:reset-seed`
+   - Start development server: `pnpm dev`
+   - Provide test user credentials once everything is running
