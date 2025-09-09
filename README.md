@@ -1,12 +1,17 @@
 
-<h1 align="center">Nextjs LLM Supastarter 🤩<br /> Next.js v15, Supabase, Drizzle, Vitest</h1>
+<h1 align="center">Vibecode Supastarter 🤩 🎸</h1>
 <p role="heading" align="center">
-  Leverage LLMs to generate and mtaintain durable, documented, tested apps with Next.js 15 and Supabase 
+   Standard tooling with testing and prompts configured – just what your LLM needs to iterate its way to success. 
 </p>
 
->   <p>This project was originally created for <a href="https://x.com/rsweetland/status/1880370865138987010"> a presentation</a> I gave at <a href="https://lu.ma/AISummitSiliconValley2025">AI Summit 2025</a> on LLM-driven development (before Vibe Coding was a thing)
+- Next.js v15 (App Router)  
+- Supabase (PostgreSQL, Auth)  
+- Drizzle ORM v0.43.1  
+- Vitest (run-on-save, debugger-ready)  
+- Tailwind CSS, shadcn/ui  
+- Embedded LLM prompts & agent tooling for automated code review and self-checks
 
-This starter (forked from my simpler <a href="https://github.com/rsweetland/next-tdd-supastarter">tdd-next-supastarter</a>) integrates <a href="https://nextjs.org/blog/next-15">Next.js 15</a>, with the Vercel boilerplate examples from <a href="https://github.com/vercel/next.js/tree/v15.0.2/examples/with-supabase">with-supabase</a>, <a href="https://github.com/vercel/next.js/tree/v15.0.2/examples/with-jest">with-jest</a>, and <a href="https://github.com/vercel/examples/tree/%40vercel/examples-ui%402.0.3/storage/postgres-drizzle">postgres-drizzle</a></li>, fixes a few issues, sets up a hyper-efficient run-on-save, debugger-ready TDD workflow, tested in <a href="https://www.cursor.com/">Cursor</a> and ready to be used in LLM dev workflows.</p><br />
+This starter starts from Vercel-provided boilerplate examples: <a href="https://github.com/vercel/next.js/tree/v15.0.2/examples/with-supabase">with-supabase</a> and <a href="https://github.com/vercel/examples/tree/%40vercel/examples-ui%402.0.3/storage/postgres-drizzle">postgres-drizzle</a>. It fixes a few issues, sets up a hyper-efficient run-on-save, debugger-ready TDD workflow LLMs can use to check their work.
 
 <p align="center">
   <a href="#features"><strong>💎 Features</strong></a> ·
@@ -17,9 +22,9 @@ This starter (forked from my simpler <a href="https://github.com/rsweetland/next
 <br/>
 
 ## Features
-- `llms.md` for your Cursor, Windsurf, Cline, Aider or other AI dev
+- `agents.md` and `CLAUDE.md` for Claude Code, Cursor, Windsurf, Cline, Aider or other AI dev tool
 - Run-on-save [Vitest](https://vitest.dev/) (video below 📺)
-- Debugger for both test and dev scripts. Just add breakpoints
+- Debugger configured so you can step through and understand your LLMs work
 - Works across the [Next.js](https://nextjs.org) stack
   - App Router
   - Middleware
@@ -31,22 +36,47 @@ This starter (forked from my simpler <a href="https://github.com/rsweetland/next
 - [Drizzle](https://orm.drizzle.team/) integration, which assumes the [Supabase with Next.js schema](https://supabase.com/docs/guides/getting-started/quickstarts/nextjs) 
 - Simple migrations
 
-## Clone and run
+## Clone and run  - Remote
 
 1. Clone this repo
-1. [Set up a Supabase project](https://supabase.com/docs/guides/getting-started/quickstarts/nextjs)
-1. Copy settings in Supabase: `Supabase dashboard > Connect (top left) > App Frameworks > Next.js`
-2.  Copy `.env.example`  to `.env`  and update:<br />
-    * `NEXT_PUBLIC_SUPABASE_URL` 
-    * `NEXT_PUBLIC_SUPABASE_ANON_KEY`  Both can be found in [your Supabase project's API settings](https://app.supabase.*com/project/_/settings/api).
-    * `DATABASE_URL`  Find from the Supabase Dashboard > Connect
+2. Set up Supabase
+   <details>
+   <summary>Locally</summary>
+
+   1. [Install Supabase CLI](https://supabase.com/docs/guides/cli) if you haven't already:
+      ```bash
+      npm install -g supabase
+      ```
+   2. Start Supabase locally (in a new terminal):
+      ```bash
+      supabase start
+      ```
+      This will spin up a local Postgres database, Supabase Studio, and Auth.
+   3. Copy `.env.example` to `.env` and update:
+      - `NEXT_PUBLIC_SUPABASE_URL`  
+        <sub>Usually `http://localhost:54321` for local dev</sub>
+      - `NEXT_PUBLIC_SUPABASE_ANON_KEY`  
+        <sub>Find in the output of `supabase status` or in `supabase/config.toml`</sub>
+      - `DATABASE_URL`  
+        <sub>Usually `postgres://postgres:postgres@localhost:54322/postgres`</sub>
+   </details>
+   <details>
+   <summary>Remotely</summary>
+
+   4. Set up a [Supabase project](https://supabase.com/docs/guides/getting-started/quickstarts/nextjs)
+   5. Copy settings in Supabase:  
+      `Supabase dashboard > Connect (top left) > App Frameworks > Next.js`
+   6. Copy `.env.example` to `.env` and update:
+      - `NEXT_PUBLIC_SUPABASE_URL`
+      - `NEXT_PUBLIC_SUPABASE_ANON_KEY`  
+      <sub>Both can be found in [your Supabase project's API settings](https://app.supabase.com/project/_/settings/api).</sub>
+      - `DATABASE_URL`  
+      <sub>Find from the Supabase Dashboard > Connect</sub>
+   </details>
+
 3. Install dependencies
     ```bash
     pnpm install
-    ```
-4. Set up Supabase database demo tables for instruments. Run this, or run the SQL from `migrations` folder
-    ```bash
-    npx drizzle-kit push
     ```
    
 5. Run the Next.js local development server:
@@ -54,16 +84,17 @@ This starter (forked from my simpler <a href="https://github.com/rsweetland/next
    ```bash
    pnpm run dev
    ```
-   You can also run it in debug mode. 
+   Run it in debug mode. (Or start `Javascript Debug Terminal` in VS Code'esque browser)
    ```bash
    pnpm run dev:inspect
    ```
    The included `launch.json` file sets up a "Debug Next.js" configuration to attach to this process.
 
-> Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
+6. Init database either by walking through Supabase tutorial, or by running `pnpm db:reset-seed`
+
 
 ## AI Dev
-`llms.md` describes versions and conventions in this project. Instruct your AI coding assistnat of choice to load it into its default context on specific tasks.
+`agents.md` and `CLAUDE.md` describes versions and conventions in this project. Instruct your AI coding assistant of choice to load it into its default context on specific tasks.
 
 Run `pnpm copy-context` to run [repomix](https://github.com/yamadashy/repomix) and copy the complete codebase to your clipboard. Paste this into a chat conversation with an advanced reasoning model for a productive conversation.
 
@@ -92,11 +123,17 @@ After debugger is attached, hit save to run tests. Add breakpoints. See to see w
 
 ## Database Migrations
 When your schema changes: 
-* run `npm run db:generate`
-* look in `drizzle` folder for the newly generated sql file
-* manually apply the sql to your database
+* Run `pnpm db:generate` to generate Drizzle migrations
+* Look in `drizzle/` folder for the newly generated SQL file
+* Manually apply the SQL to your database
 
-It's simple and durable way to operate on your production and dev database.
+Additional database commands:
+* `pnpm db:push` - Push schema changes directly to database
+* `pnpm db:reset` - Reset database and push schema
+* `pnpm db:seed` - Seed database with initial data
+* `pnpm db:reset-seed` - Reset database and seed with initial data
+
+This is a simple and durable way to operate on your production and dev database.
 
 ## UI
 This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
@@ -104,5 +141,4 @@ This template comes with the default shadcn/ui style initialized. If you instead
 
 ## Feedback and issues
 
-This is not an official Supabase or Vercel project. It's just my own personal preference and dev workflow that I thought I would share. Feel free to create issues, fork and improve this project. Drop a ⭐️ if you'd like. Sometimes I am also hiring. Connect with me on Twitter <a href="https://twitter.com/rsweetland">@rsweetland</a>
-
+This is not an official Supabase or Vercel project. Create issues, fork and improve this project. Drop a ⭐️ if you'd like. Connect with me on Twitter <a href="https://twitter.com/rsweetland">@rsweetland</a>
